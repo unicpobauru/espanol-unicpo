@@ -366,7 +366,7 @@ function cache() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {
 
 /* ---------- planilha Google (Apps Script) ----------
    Com API_URL preenchido, os dados vivem na planilha; o navegador guarda só uma cópia para abrir rápido. */
-const API_URL = '';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyii0mPxI8ZX10EkFv6Fp3F0mlbZt8ONFzeeSYQAPB9PNUsBBFb21w-Ew_MvTcG4d_EvA/exec';
 let rev = null, senha = null, sujo = false, enviando = false, timer = null;
 try { senha = localStorage.getItem(KEY + '-senha'); rev = JSON.parse(localStorage.getItem(KEY + '-rev')); } catch {}
 function syncStatus(txt, err) { const el = $('#sync'); el.textContent = txt; el.classList.toggle('err', !!err); }
