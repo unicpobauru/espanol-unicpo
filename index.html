@@ -144,6 +144,15 @@ dialog h3{margin:0 0 4px}
 .picklist label small{color:var(--muted)}
 .picklist .grp{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:8px 6px 2px}
 .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
+.sync{font-size:12px;opacity:.85;white-space:nowrap}
+.sync.err{color:#ffb4a3;opacity:1;font-weight:600}
+#login{position:fixed;inset:0;z-index:20;background:var(--bg);display:none;align-items:center;justify-content:center;padding:16px}
+#login.on{display:flex}
+#login .card{width:min(380px,100%);text-align:center}
+#login h2{font-size:18px;margin:0 0 4px}
+#login input{width:100%;margin:14px 0 8px;text-align:center}
+#login .btn{width:100%;justify-content:center}
+#loginErr{color:var(--crit);font-size:13px;min-height:18px}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:9px 16px;border-radius:10px;font-weight:500;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
 .note{font-size:12px;color:var(--text-2)}
@@ -159,6 +168,7 @@ dialog h3{margin:0 0 4px}
       <div class="sub">Turmas, cronograma, chamada e frequência</div>
     </div>
     <div class="sp"></div>
+    <span class="sync" id="sync"></span>
     <button class="iconbtn" id="themeBtn" title="Alternar tema">◐ Tema</button>
   </div>
   <nav id="tabs">
@@ -310,6 +320,14 @@ dialog h3{margin:0 0 4px}
   </section>
 </main>
 
+<div id="login"><form class="card" id="loginForm">
+  <h2>Clases de Español · UniCPO</h2>
+  <p class="note">Digite a senha para abrir as turmas.</p>
+  <input type="password" id="loginSenha" autocomplete="current-password" placeholder="Senha" required>
+  <div id="loginErr"></div>
+  <button class="btn pri" id="loginBtn">Entrar</button>
+</form></div>
+
 <dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
 <div class="toast" id="toast"></div>
 
@@ -343,7 +361,74 @@ function blank() {
 }
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || blank(); } catch { S = blank(); }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { toast('Não foi possível salvar neste navegador'); } }
+function save() { cache(); if (API_URL) agendarEnvio(); }
+function cache() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { if (!API_URL) toast('Não foi possível salvar neste navegador'); } }
+
+/* ---------- planilha Google (Apps Script) ----------
+   Com API_URL preenchido, os dados vivem na planilha; o navegador guarda só uma cópia para abrir rápido. */
+const API_URL = '';
+let rev = null, senha = null, sujo = false, enviando = false, timer = null;
+try { senha = localStorage.getItem(KEY + '-senha'); rev = JSON.parse(localStorage.getItem(KEY + '-rev')); } catch {}
+function syncStatus(txt, err) { const el = $('#sync'); el.textContent = txt; el.classList.toggle('err', !!err); }
+async function api(req) {
+  const r = await fetch(API_URL, {method: 'POST', body: JSON.stringify({...req, senha})});  // text/plain: sem preflight CORS
+  return r.json();
+}
+function guardarRev(r) { rev = r; try { localStorage.setItem(KEY + '-rev', JSON.stringify(r)); } catch {} }
+function pedirSenha(msg) {
+  $('#login').classList.add('on'); $('#loginErr').textContent = msg || ''; $('#loginSenha').value = ''; $('#loginSenha').focus();
+}
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  senha = $('#loginSenha').value; $('#loginBtn').disabled = true; $('#loginErr').textContent = '';
+  const ok = await baixar(true);
+  $('#loginBtn').disabled = false;
+  if (ok) { try { localStorage.setItem(KEY + '-senha', senha); } catch {} $('#login').classList.remove('on'); }
+});
+async function baixar(doLogin) {
+  syncStatus('☁ Carregando…');
+  let r;
+  try { r = await api({acao: 'ler'}); } catch { syncStatus('⚠ Sem conexão', true); if (doLogin) $('#loginErr').textContent = 'Sem conexão com a planilha. Tente de novo.'; return false; }
+  if (r.erro === 'senha') { senha = null; try { localStorage.removeItem(KEY + '-senha'); } catch {} pedirSenha(doLogin ? 'Senha incorreta' : ''); syncStatus(''); return false; }
+  if (r.erro) { syncStatus('⚠ ' + r.erro, true); if (doLogin) $('#loginErr').textContent = r.erro; return false; }
+  if (r.dados && r.rev !== rev) {
+    const perdeu = sujo; sujo = false; clearTimeout(timer);
+    S = r.dados; guardarRev(r.rev); cache(); render();
+    if (perdeu) alert('Os dados foram alterados em outro computador e a versão mais nova foi carregada. Confira se a sua última alteração está lá e refaça se precisar.');
+  }
+  else if (!r.dados) { guardarRev(r.rev); if (S.alunos.length) sujo = true; }  // planilha vazia: sobe o que já existe neste navegador
+  if (sujo) enviar();
+  if (!sujo) syncStatus('☁ Salvo na planilha');
+  return true;
+}
+function agendarEnvio() { sujo = true; syncStatus('☁ Salvando…'); clearTimeout(timer); timer = setTimeout(enviar, 800); }
+async function enviar() {
+  if (enviando || !senha || rev === null) return;  // rev null: ainda não leu a planilha; baixar() envia depois
+  enviando = true; sujo = false;
+  let r;
+  try { r = await api({acao: 'salvar', rev, dados: S}); }
+  catch { r = null; }
+  enviando = false;
+  if (!r) { sujo = true; syncStatus('⚠ Sem conexão · tentando de novo', true); timer = setTimeout(enviar, 10000); return; }
+  if (r.erro === 'senha') { sujo = true; return pedirSenha('Digite a senha de novo para salvar'); }
+  if (r.erro === 'conflito') {
+    guardarRev(r.rev);
+    if (!r.dados) { sujo = true; return enviar(); }
+    S = r.dados; cache(); render();
+    syncStatus('☁ Salvo na planilha');
+    return alert('Os dados foram alterados em outro computador e a versão mais nova foi carregada. Confira se a sua última alteração está lá e refaça se precisar.');
+  }
+  if (r.erro) { sujo = true; return syncStatus('⚠ ' + r.erro, true); }
+  guardarRev(r.rev);
+  if (sujo) enviar(); else syncStatus('☁ Salvo na planilha');
+}
+function sair() {
+  if (!confirm('Sair deste computador? Os dados continuam na planilha; a senha será pedida de novo.')) return;
+  try { [KEY, KEY + '-senha', KEY + '-rev'].forEach(k => localStorage.removeItem(k)); } catch {}
+  location.reload();
+}
+addEventListener('beforeunload', e => { if (API_URL && (sujo || enviando)) e.preventDefault(); });
+document.addEventListener('visibilitychange', () => { if (API_URL && senha && document.visibilityState === 'visible' && !sujo && !enviando) baixar(); });
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2200); }
 
 const turmaById = id => S.turmas.find(t => t.id === id);
@@ -492,7 +577,8 @@ function pendentes() {
 }
 function renderPainel() {
   const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
-  $('#backupBanner').innerHTML = S.alunos.length && (days === null || days >= 7)
+  $('#backupBanner').innerHTML = API_URL && S.alunos.length ? ''
+    : S.alunos.length && (days === null || days >= 7)
     ? `<div class="banner"><span>💾 ${days === null ? 'Você ainda não fez nenhum backup.' : `Último backup há ${days} dias.`} Os dados ficam só neste navegador.</span><div class="sp"></div><button class="btn pri sm" onclick="baixarBackup()">Baixar backup agora</button></div>`
     : !S.alunos.length ? `<div class="banner"><span>Nenhum dado ainda. Restaure o arquivo de dados iniciais (.json) ou comece criando turmas.</span><div class="sp"></div><label class="btn pri sm">Restaurar arquivo<input type="file" accept=".json" hidden onchange="restaurar(this)"></label></div>` : '';
 
@@ -798,7 +884,9 @@ function renderDados() {
   $('#lDeps').value = S.config.departamentos.join('\n');
   $('#lNiveis').value = S.config.niveis.join('\n');
   $('#lMeta').value = S.config.meta;
-  $('#lastBackup').textContent = S.lastBackup ? `Último backup: ${new Date(S.lastBackup).toLocaleString('pt-BR')}` : 'Nenhum backup feito ainda.';
+  $('#lastBackup').innerHTML = API_URL
+    ? 'Os dados são salvos automaticamente na Planilha Google. O backup é uma cópia extra. <button class="btn sm" onclick="sair()">Sair deste computador</button>'
+    : S.lastBackup ? `Último backup: ${new Date(S.lastBackup).toLocaleString('pt-BR')}` : 'Nenhum backup feito ainda.';
 }
 $('#lSalvar').onclick = () => {
   const L = id => $(id).value.split('\n').map(s => s.trim()).filter(Boolean);
@@ -831,6 +919,7 @@ $('#xRestore').onchange = e => restaurar(e.target);
 $('#xApagar').onclick = () => { if (confirm('Apagar TODAS as turmas, alunos, cronograma e chamadas deste navegador?')) { S = blank(); save(); toast('Dados apagados'); renderDados(); } };
 
 render();
+if (API_URL) { if (senha) baixar(); else pedirSenha(); }
 </script>
 </body>
 </html>
