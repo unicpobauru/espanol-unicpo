@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clases de Español · UniCPO</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f5f7; --surface:#fcfcfb; --surface-2:#eef0f3; --border:#dfe2e7;
+  --text:#0b0b0b; --text-2:#52514e; --muted:#85837d;
+  --brand:#0f2a4a; --brand-ink:#fff; --accent:#2a78d6;
+  --s-pres:#2a78d6; --s-falta:#eb6834;
+  --good:#0a7a3d; --warn:#b36b00; --crit:#c62828;
+  --grid:#e6e7ea;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121212; --surface:#1a1a19; --surface-2:#242423; --border:#33332f;
+    --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8d86;
+    --brand:#0b1f38; --accent:#3987e5;
+    --s-pres:#3987e5; --s-falta:#d95926;
+    --good:#4cc27a; --warn:#e0a03a; --crit:#ef6b6b; --grid:#2c2c29;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121212; --surface:#1a1a19; --surface-2:#242423; --border:#33332f;
+  --text:#f0efec; --text-2:#c3c2b7; --muted:#8f8d86;
+  --brand:#0b1f38; --accent:#3987e5;
+  --s-pres:#3987e5; --s-falta:#d95926;
+  --good:#4cc27a; --warn:#e0a03a; --crit:#ef6b6b; --grid:#2c2c29;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+header{background:var(--brand);color:var(--brand-ink);padding:14px 16px 0}
+.top{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.01em}
+.top .sub{opacity:.7;font-size:12px}
+.top .sp{flex:1}
+.iconbtn{background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+nav{max-width:1280px;margin:10px auto 0;display:flex;gap:2px;overflow-x:auto}
+nav button{background:transparent;border:0;color:rgba(255,255,255,.7);padding:10px 14px;cursor:pointer;border-radius:8px 8px 0 0;white-space:nowrap;font-weight:500}
+nav button.on{background:var(--bg);color:var(--text)}
+main{max-width:1280px;margin:0 auto;padding:18px 16px 60px}
+.view{display:none}.view.on{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.kpi .lbl{color:var(--text-2);font-size:12px;font-weight:500}
+.kpi .val{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-top:2px}
+.kpi .hint{color:var(--muted);font-size:12px}
+.charts{grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));margin-top:14px}
+.card h2{font-size:15px;margin:0 0 2px}
+.card .desc{color:var(--text-2);font-size:12px;margin:0 0 10px}
+.chartbox{position:relative;height:280px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-2);margin-bottom:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:14px}
+.toolbar label{display:flex;flex-direction:column;font-size:12px;color:var(--text-2);gap:3px}
+.toolbar .sp{flex:1}
+input,select,textarea{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 9px;min-height:34px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:500;min-height:34px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--surface-2)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:var(--crit)}
+.btn.sm{min-height:28px;padding:3px 9px;font-size:13px}
+.tablewrap{overflow:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--border);padding:6px 8px;text-align:left;white-space:nowrap}
+th{background:var(--surface-2);font-size:12px;color:var(--text-2);font-weight:600;position:sticky;top:0;z-index:1}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.sheet td{padding:0;border-right:1px solid var(--border)}
+.sheet td input,.sheet td select{border:0;border-radius:0;background:transparent;width:100%;min-height:32px;padding:6px 8px}
+.sheet td select{min-width:130px}
+.sheet td.num,.sheet td.ro{padding:6px 8px}
+.sheet td.rown{color:var(--muted);text-align:center;background:var(--surface-2);padding:6px;width:36px}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:99px;padding:1px 8px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.ok{color:var(--good);background:color-mix(in srgb,var(--good) 12%,transparent)}
+.pill.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.pill.crit{color:var(--crit);background:color-mix(in srgb,var(--crit) 12%,transparent)}
+.pill.na{color:var(--muted);background:var(--surface-2)}
+.pill.info{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:6px 12px;cursor:pointer;min-width:84px;font-weight:600;color:var(--text-2)}
+.seg button+button{border-left:1px solid var(--border)}
+.seg button.on[data-v=P]{background:var(--s-pres);color:#fff}
+.seg button.on[data-v=F]{background:var(--s-falta);color:#fff}
+.obs{width:100%;min-width:160px;min-height:30px;padding:4px 8px}
+.matrix td.cell{text-align:center;cursor:pointer;font-weight:700;min-width:46px;user-select:none}
+.matrix td.cell[data-v=P]{color:var(--s-pres)}
+.matrix td.cell[data-v=F]{color:#fff;background:var(--s-falta)}
+.matrix td.cell.has-obs::after{content:"•";color:var(--warn);margin-left:2px}
+.matrix td.cell:hover{outline:2px solid var(--accent);outline-offset:-2px}
+.matrix th.date{text-align:center;cursor:pointer}
+.matrix th.date small{display:block;font-weight:400;color:var(--muted)}
+.turmas{grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}
+.turma h3{margin:0;font-size:15px}
+.turma .meta{color:var(--text-2);font-size:12px;margin:4px 0 8px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{background:var(--surface-2);border-radius:6px;padding:1px 7px;font-size:12px;color:var(--text-2)}
+.bar{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.bar>span{display:block;height:100%;background:var(--s-pres);border-radius:99px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.empty{text-align:center;color:var(--text-2);padding:36px 16px}
+.empty b{display:block;color:var(--text);font-size:16px;margin-bottom:4px}
+/* cronograma */
+.week{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.day{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;min-height:120px}
+.day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.day h3{margin:0 0 8px;font-size:13px;display:flex;justify-content:space-between;color:var(--text-2)}
+.day h3 b{color:var(--text)}
+.occ{display:block;width:100%;text-align:left;background:var(--surface-2);border:1px solid transparent;border-left:3px solid var(--accent);border-radius:8px;padding:7px 8px;margin-bottom:6px;cursor:pointer}
+.occ:hover{border-color:var(--border);border-left-color:var(--accent)}
+.occ .t{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.occ .n{font-size:12.5px;line-height:1.3;margin:2px 0 4px}
+.occ.done{border-left-color:var(--good)}
+.occ.pend{border-left-color:var(--warn)}
+.occ.cancel{opacity:.55;border-left-color:var(--muted)}
+.occ.cancel .n{text-decoration:line-through}
+.today-list .occ{display:flex;gap:12px;align-items:center}
+.today-list .occ .n{flex:1;margin:0}
+@media (max-width:980px){.week{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.week{grid-template-columns:1fr}.kpi .val{font-size:24px}.chartbox{height:240px}}
+dialog{border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);padding:20px;width:min(620px,calc(100vw - 32px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg-x{position:absolute;top:10px;right:10px;width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:var(--text-2);font-size:16px;cursor:pointer}
+.dlg-x:hover{background:var(--surface-2);color:var(--text)}
+dialog h3{padding-right:36px}
+dialog h3{margin:0 0 4px}
+.form{display:grid;gap:10px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-2)}
+.form .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.slotrow{display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:6px;margin-bottom:6px}
+.picklist{max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:4px}
+.picklist label{flex-direction:row;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;color:var(--text);font-size:13px;cursor:pointer}
+.picklist label:hover{background:var(--surface-2)}
+.picklist label small{color:var(--muted)}
+.picklist .grp{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:8px 6px 2px}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:9px 16px;border-radius:10px;font-weight:500;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
+.toast.on{opacity:1}
+.note{font-size:12px;color:var(--text-2)}
+.banner{background:color-mix(in srgb,var(--accent) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner .sp{flex:1}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <h1>Clases de Español · UniCPO</h1>
+      <div class="sub">Turmas, cronograma, chamada e frequência</div>
+    </div>
+    <div class="sp"></div>
+    <button class="iconbtn" id="themeBtn" title="Alternar tema">◐ Tema</button>
+  </div>
+  <nav id="tabs">
+    <button data-v="painel" class="on">Painel</button>
+    <button data-v="cronograma">Cronograma</button>
+    <button data-v="chamada">Chamada</button>
+    <button data-v="turmas">Turmas</button>
+    <button data-v="alunos">Alunos</button>
+    <button data-v="dados">Dados &amp; ajustes</button>
+  </nav>
+</header>
+
+<main>
+  <!-- PAINEL -->
+  <section class="view on" id="v-painel">
+    <div id="backupBanner"></div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="row" style="justify-content:space-between"><div><h2 id="hojeTit">Aulas de hoje</h2><p class="desc">Clique numa aula para fazer a chamada</p></div><button class="btn sm" onclick="go('cronograma')">Ver semana</button></div>
+      <div class="today-list" id="hojeBox"></div>
+    </div>
+    <div class="toolbar">
+      <label>Turma<select id="fTurma"></select></label>
+      <label>Departamento<select id="fDep"></select></label>
+      <label>De<input type="date" id="fDe"></label>
+      <label>Até<input type="date" id="fAte"></label>
+      <button class="btn" id="fLimpar">Limpar filtros</button>
+    </div>
+    <div class="grid kpis" id="kpis"></div>
+    <div class="grid charts">
+      <div class="card">
+        <h2>Frequência por departamento</h2>
+        <p class="desc">Quantidade de presenças e faltas registradas</p>
+        <div class="legend"><span><i style="background:var(--s-pres)"></i>Presença</span><span><i style="background:var(--s-falta)"></i>Falta</span></div>
+        <div class="chartbox"><canvas id="cDep"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Evolução da presença</h2>
+        <p class="desc">% de presença em cada dia de aula · linha tracejada = meta</p>
+        <div class="chartbox"><canvas id="cEvo"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Presença por turma</h2>
+        <p class="desc">% de presença de cada turma</p>
+        <div class="chartbox" id="chTurmaBox"><canvas id="chTurma"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Alunos por nível</h2>
+        <p class="desc">Em que nível de ensino cada aluno está</p>
+        <div class="chartbox"><canvas id="cNivel"></canvas></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>Precisam de atenção</h2>
+      <p class="desc">Presença abaixo da meta ou 2+ faltas seguidas</p>
+      <div class="tablewrap" id="risco"></div>
+    </div>
+  </section>
+
+  <!-- CRONOGRAMA -->
+  <section class="view" id="v-cronograma">
+    <div class="toolbar">
+      <button class="btn" id="wPrev">◀</button>
+      <button class="btn" id="wHoje">Hoje</button>
+      <button class="btn" id="wNext">▶</button>
+      <h2 id="wLabel" style="margin:0 6px;font-size:16px;align-self:center"></h2>
+      <div class="sp"></div>
+      <button class="btn pri" id="wExtra">+ Aula extra / reposição</button>
+    </div>
+    <div class="week" id="weekBox"></div>
+    <p class="note" style="margin-top:10px">Clique numa aula para fazer a chamada, cancelar ou remarcar só naquela data. Para mudar o horário fixo de uma turma, edite a turma na aba <a href="#" onclick="go('turmas');return false">Turmas</a>.</p>
+    <div id="semHorario"></div>
+  </section>
+
+  <!-- CHAMADA -->
+  <section class="view" id="v-chamada">
+    <div class="toolbar">
+      <label>Turma<select id="cTurma" style="max-width:340px"></select></label>
+      <label>Data da aula<input type="date" id="cData"></label>
+      <label style="flex:1;min-width:180px">Conteúdo da aula (opcional)<input id="cTema" placeholder="Ex.: Verbos irregulares en presente"></label>
+    </div>
+    <div class="card" id="chamadaBox"></div>
+    <div class="card" style="margin-top:14px">
+      <h2>Grade de presença da turma</h2>
+      <p class="desc">Como na planilha: clique numa célula para alternar P → F → vazio. Clique na data para abrir aquela aula. • = tem observação.</p>
+      <div class="tablewrap" id="matrix"></div>
+    </div>
+  </section>
+
+  <!-- TURMAS -->
+  <section class="view" id="v-turmas">
+    <div class="toolbar">
+      <label style="min-width:200px;flex:1">Buscar<input id="tBusca" placeholder="Nome da turma ou aluno…"></label>
+      <button class="btn pri" id="tNova">+ Nova turma</button>
+    </div>
+    <div class="grid turmas" id="turmasBox"></div>
+  </section>
+
+  <!-- ALUNOS -->
+  <section class="view" id="v-alunos">
+    <div class="toolbar">
+      <label style="min-width:200px;flex:1">Buscar<input id="aBusca" placeholder="Nome, departamento…"></label>
+      <label>Turma<select id="aTurma" style="max-width:240px"></select></label>
+      <label>Departamento<select id="aDep"></select></label>
+      <label>Nível<select id="aNivel"></select></label>
+      <button class="btn" id="aColar">Colar do Excel</button>
+      <button class="btn pri" id="aNovo">+ Aluno</button>
+    </div>
+    <div class="tablewrap" id="alunosTbl"></div>
+    <p class="note">Alterações são salvas automaticamente. Para colocar um aluno numa turma, edite a turma na aba Turmas.</p>
+  </section>
+
+  <!-- DADOS -->
+  <section class="view" id="v-dados">
+    <div class="grid charts" style="margin-top:0">
+      <div class="card">
+        <h2>Backup</h2>
+        <p class="desc">Os dados ficam salvos neste navegador. Faça backup toda semana e use-o para levar os dados para outro computador.</p>
+        <div class="row">
+          <button class="btn pri" id="xBackup">Baixar backup</button>
+          <label class="btn">Restaurar backup<input type="file" id="xRestore" accept=".json" hidden></label>
+        </div>
+        <p class="note" id="lastBackup"></p>
+      </div>
+      <div class="card">
+        <h2>Exportar para Excel</h2>
+        <p class="desc">Arquivos CSV abrem direto no Excel.</p>
+        <div class="row">
+          <button class="btn" id="xAlunos">Alunos + frequência</button>
+          <button class="btn" id="xChamada">Todas as chamadas</button>
+          <button class="btn" id="xCrono">Cronograma</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Listas</h2>
+        <p class="desc">Uma opção por linha.</p>
+        <div class="form">
+          <label>Departamentos<textarea id="lDeps" rows="6"></textarea></label>
+          <label>Níveis (na ordem de progressão)<textarea id="lNiveis" rows="5"></textarea></label>
+          <label>Meta de presença (%)<input type="number" id="lMeta" min="0" max="100"></label>
+        </div>
+        <div class="actions"><button class="btn pri" id="lSalvar">Salvar listas</button></div>
+      </div>
+      <div class="card">
+        <h2>Zerar</h2>
+        <p class="desc">Apaga turmas, alunos, cronograma e chamadas deste navegador. Baixe um backup antes.</p>
+        <button class="btn danger" id="xApagar">Apagar todos os dados</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const KEY = 'unicpo-espanol-v2';
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
+const today = () => iso(new Date());
+const fmtDate = s => s.slice(8, 10) + '/' + s.slice(5, 7);
+const pct = (a, b) => b ? Math.round(a / b * 100) : null;
+const DIA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const DIA_L = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+const LABEL = {P: 'Presença', F: 'Falta'};
+
+function blank() {
+  return {
+    v: 2,
+    config: {
+      departamentos: ['Comercial', 'Marketing', 'Tráfego', 'Tecnologia', 'Acadêmico', 'RH', 'CS', 'Financeiro', 'Clínica'],
+      niveis: ['Básico 1', 'Básico 2', 'Intermédio 1', 'Intermédio 2', 'Avançado 1', 'Avançado 2'],
+      meta: 75
+    },
+    alunos: [], turmas: [], aulas: [], excecoes: [], lastBackup: null
+  };
+}
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) || blank(); } catch { S = blank(); }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { toast('Não foi possível salvar neste navegador'); } }
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2200); }
+
+const turmaById = id => S.turmas.find(t => t.id === id);
+const alunoById = id => S.alunos.find(a => a.id === id);
+const turmasDo = alunoId => S.turmas.filter(t => t.alunos.includes(alunoId));
+const opts = (list, sel, first) => (first !== undefined ? `<option value="">${esc(first)}</option>` : '') +
+  list.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(l)}</option>`; }).join('');
+const turmaOpts = () => S.turmas.map(t => [t.id, t.nome]);
+const deps = () => [...new Set([...S.config.departamentos, ...S.alunos.map(a => a.departamento).filter(Boolean)])];
+const niveis = () => [...new Set([...S.config.niveis, ...S.alunos.map(a => a.nivel).filter(Boolean)])];
+const horariosTxt = t => t.slots.slice().sort((a, b) => a.dia - b.dia || a.ini.localeCompare(b.ini)).map(s => `${DIA[s.dia]} ${s.ini}–${s.fim}`).join(' · ');
+const short = (s, n = 30) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+
+/* ---------- estatísticas ---------- */
+function statsAluno(alunoId, aulas = S.aulas) {
+  const s = {P: 0, F: 0, seq: []};
+  aulas.slice().sort((a, b) => a.data.localeCompare(b.data)).forEach(au => { const v = au.reg[alunoId]; if (v) { s[v]++; s.seq.push(v); } });
+  s.total = s.P + s.F;
+  s.taxa = pct(s.P, s.total);
+  s.seguidas = 0; for (let i = s.seq.length - 1; i >= 0 && s.seq[i] === 'F'; i--) s.seguidas++;
+  return s;
+}
+function status(s) {
+  if (!s.total) return ['na', 'Sem registro'];
+  if (s.seguidas >= 2 || s.taxa < S.config.meta - 15) return ['crit', '⚠ Em risco'];
+  if (s.taxa < S.config.meta) return ['warn', '! Atenção'];
+  return ['ok', '✓ Em dia'];
+}
+
+/* ---------- cronograma: aulas previstas numa data ---------- */
+function ocorrencias(data) {
+  const dow = parse(data).getDay(), list = [];
+  S.turmas.forEach(t => t.slots.forEach(s => { if (s.dia === dow) list.push({turma: t, data, ini: s.ini, fim: s.fim, tipo: 'fixa'}); }));
+  S.excecoes.filter(e => e.data === data).forEach(e => {
+    const t = turmaById(e.turmaId); if (!t) return;
+    if (e.tipo === 'cancelada') list.filter(o => o.turma === t && o.tipo === 'fixa' && (!e.ini || o.ini === e.ini)).forEach(o => { o.cancelada = e; });
+    else list.push({turma: t, data, ini: e.ini, fim: e.fim, tipo: 'extra', ex: e});
+  });
+  list.forEach(o => { o.aula = S.aulas.find(a => a.turmaId === o.turma.id && a.data === data); });
+  return list.sort((a, b) => a.ini.localeCompare(b.ini));
+}
+function occStatus(o) {
+  if (o.cancelada) return ['na', 'Cancelada', 'cancel'];
+  if (o.aula) { const n = Object.keys(o.aula.reg).length, p = Object.values(o.aula.reg).filter(v => v === 'P').length; return ['ok', `✓ ${p}/${n} presentes`, 'done']; }
+  if (o.data < today() || (o.data === today() && o.fim <= new Date().toTimeString().slice(0, 5))) return ['warn', 'Chamada pendente', 'pend'];
+  return ['info', o.tipo === 'extra' ? 'Aula extra' : 'Prevista', ''];
+}
+function occCard(o) {
+  const [c, l, k] = occStatus(o);
+  return `<button type="button" class="occ ${k}" data-t="${o.turma.id}" data-d="${o.data}" data-i="${o.ini}" data-x="${o.ex?.id || ''}">
+    <div class="t">${o.ini}–${o.fim}${o.tipo === 'extra' ? ' · extra' : ''}</div>
+    <div class="n">${esc(o.turma.nome)}</div>
+    <span class="pill ${c}">${l}</span>${o.cancelada?.motivo ? ` <span class="note">${esc(o.cancelada.motivo)}</span>` : ''}</button>`;
+}
+function occDialog(el) {
+  const t = turmaById(el.dataset.t), data = el.dataset.d, ini = el.dataset.i;
+  const o = ocorrencias(data).find(x => x.turma === t && x.ini === ini && (x.ex?.id || '') === el.dataset.x);
+  if (!o) return;
+  const nomes = t.alunos.map(alunoById).filter(Boolean).map(a => a.nome);
+  openDlg(`<h3>${esc(t.nome)}</h3>
+    <p class="note" style="margin:0 0 12px">${DIA_L[parse(data).getDay()]}, ${fmtDate(data)} · ${o.ini}–${o.fim}${o.tipo === 'extra' ? ' · aula extra' : ''}${t.nivel ? ' · ' + esc(t.nivel) : ''}</p>
+    <div class="chips" style="margin-bottom:12px">${nomes.map(n => `<span class="chip">${esc(n)}</span>`).join('') || '<span class="note">Turma sem alunos</span>'}</div>
+    ${o.cancelada ? `<p class="note">Aula cancelada nesta data${o.cancelada.motivo ? ': ' + esc(o.cancelada.motivo) : ''}.</p>` : ''}
+    <div id="remarcar" style="display:none" class="form">
+      <div class="two"><label>Nova data<input type="date" id="rData" value="${data}"></label><label>Motivo (opcional)<input id="rMotivo" placeholder="Ex.: feriado, reunião"></label></div>
+      <div class="two"><label>Início<input type="time" id="rIni" value="${o.ini}"></label><label>Fim<input type="time" id="rFim" value="${o.fim}"></label></div>
+    </div>
+    <div class="actions" id="occActs">
+      ${t.link ? `<a class="btn" href="${esc(t.link)}" target="_blank" rel="noopener">Abrir Meet</a>` : ''}
+      ${o.cancelada ? '<button class="btn" value="descancelar">Desfazer cancelamento</button>'
+        : o.tipo === 'extra' ? '<button class="btn danger" value="delextra">Excluir aula extra</button><button class="btn" type="button" id="btnRem">Remarcar</button>'
+        : '<button class="btn danger" value="cancelar">Cancelar nesta data</button><button class="btn" type="button" id="btnRem">Remarcar</button>'}
+      ${o.cancelada ? '' : `<button class="btn pri" value="chamada">${o.aula ? 'Ver chamada' : 'Fazer chamada'}</button>`}
+    </div>`,
+  v => {
+    if (v === 'chamada') return abrirChamada(t.id, data);
+    if (v === 'cancelar') S.excecoes.push({id: uid(), turmaId: t.id, data, tipo: 'cancelada', ini: o.ini, motivo: ''});
+    if (v === 'descancelar') S.excecoes = S.excecoes.filter(e => e !== o.cancelada);
+    if (v === 'delextra') S.excecoes = S.excecoes.filter(e => e !== o.ex);
+    if (v === 'remarcar') {
+      const nd = $('#rData').value, ni = $('#rIni').value, nf = $('#rFim').value, mot = $('#rMotivo').value.trim();
+      if (!nd || !ni || !nf) return toast('Preencha data e horário');
+      if (o.tipo === 'extra') Object.assign(o.ex, {data: nd, ini: ni, fim: nf, motivo: mot || o.ex.motivo});
+      else {
+        S.excecoes.push({id: uid(), turmaId: t.id, data, tipo: 'cancelada', ini: o.ini, motivo: `Remarcada p/ ${fmtDate(nd)} ${ni}` + (mot ? ` · ${mot}` : '')});
+        S.excecoes.push({id: uid(), turmaId: t.id, data: nd, tipo: 'extra', ini: ni, fim: nf, motivo: `Reposição de ${fmtDate(data)}`});
+      }
+      toast('Aula remarcada');
+    }
+    save(); render();
+  },
+  () => {
+    const b = $('#btnRem'); if (!b) return;
+    b.onclick = () => {
+      $('#remarcar').style.display = 'grid';
+      $('#occActs').innerHTML = '<button class="btn" value="cancel">Voltar</button><button class="btn pri" value="remarcar">Confirmar nova data</button>';
+    };
+  });
+}
+document.addEventListener('click', e => { const o = e.target.closest('.occ'); if (o) occDialog(o); });
+
+/* ---------- navegação ---------- */
+let view = 'painel';
+function go(v) {
+  view = v;
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x.dataset.v === v));
+  document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
+  render(); window.scrollTo({top: 0});
+}
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.v); });
+function render() { ({painel: renderPainel, cronograma: renderCrono, chamada: renderChamada, turmas: renderTurmas, alunos: renderAlunos, dados: renderDados})[view](); }
+
+$('#themeBtn').onclick = () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const nxt = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = nxt;
+  try { localStorage.setItem(KEY + '-theme', nxt); } catch {}
+  render();
+};
+try { const t = localStorage.getItem(KEY + '-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
+
+/* ---------- PAINEL ---------- */
+const charts = {};
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function mkChart(id, cfg) {
+  if (charts[id]) charts[id].destroy();
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+  Chart.defaults.color = css('--text-2');
+  const plugins = cfg.options?.plugins || {};
+  cfg.options = Object.assign({responsive: true, maintainAspectRatio: false, animation: {duration: 250}}, cfg.options);
+  cfg.options.plugins = {legend: {display: false},
+    tooltip: Object.assign({backgroundColor: css('--text'), titleColor: css('--surface'), bodyColor: css('--surface'), footerColor: css('--surface'), padding: 9, cornerRadius: 8, boxPadding: 4}, plugins.tooltip)};
+  for (const ax of Object.values(cfg.options.scales || {})) {
+    ax.grid = Object.assign({color: css('--grid'), drawTicks: false}, ax.grid); ax.border = {display: false};
+    ax.ticks = Object.assign({padding: 6}, ax.ticks);
+  }
+  charts[id] = new Chart(document.getElementById(id), cfg);
+}
+function pendentes() {
+  // só conta a partir da primeira chamada registrada (antes disso o controle era na planilha)
+  const out = [], inicio = S.aulas.map(a => a.data).sort()[0];
+  if (!inicio) return out;
+  for (let i = 14; i >= 0; i--) { const d = addDays(today(), -i); if (d >= inicio) ocorrencias(d).forEach(o => { if (occStatus(o)[2] === 'pend' && o.turma.alunos.length) out.push(o); }); }
+  return out;
+}
+function renderPainel() {
+  const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
+  $('#backupBanner').innerHTML = S.alunos.length && (days === null || days >= 7)
+    ? `<div class="banner"><span>💾 ${days === null ? 'Você ainda não fez nenhum backup.' : `Último backup há ${days} dias.`} Os dados ficam só neste navegador.</span><div class="sp"></div><button class="btn pri sm" onclick="baixarBackup()">Baixar backup agora</button></div>`
+    : !S.alunos.length ? `<div class="banner"><span>Nenhum dado ainda. Restaure o arquivo de dados iniciais (.json) ou comece criando turmas.</span><div class="sp"></div><label class="btn pri sm">Restaurar arquivo<input type="file" accept=".json" hidden onchange="restaurar(this)"></label></div>` : '';
+
+  const hoje = today(), occ = ocorrencias(hoje);
+  $('#hojeTit').textContent = `Aulas de hoje · ${DIA_L[parse(hoje).getDay()]}, ${fmtDate(hoje)}`;
+  $('#hojeBox').innerHTML = occ.length ? occ.map(occCard).join('') : '<p class="note">Nenhuma aula prevista para hoje.</p>';
+
+  const keep = ['fTurma', 'fDep'].map(i => $('#' + i).value);
+  $('#fTurma').innerHTML = opts(turmaOpts(), keep[0], 'Todas as turmas');
+  $('#fDep').innerHTML = opts(deps(), keep[1], 'Todos');
+  const ft = $('#fTurma').value, fd = $('#fDep').value, de = $('#fDe').value, ate = $('#fAte').value;
+  const aulas = S.aulas.filter(a => (!ft || a.turmaId === ft) && (!de || a.data >= de) && (!ate || a.data <= ate));
+  const tSel = turmaById(ft);
+  const alunos = S.alunos.filter(a => (!fd || a.departamento === fd) && (!ft || tSel.alunos.includes(a.id) || aulas.some(au => au.reg[a.id])));
+  const st = alunos.map(a => ({a, s: statsAluno(a.id, aulas)}));
+  const tot = st.reduce((o, {s}) => (o.P += s.P, o.F += s.F, o), {P: 0, F: 0});
+  const taxa = pct(tot.P, tot.P + tot.F), meta = S.config.meta;
+  const risco = st.filter(x => ['crit', 'warn'].includes(status(x.s)[0]));
+  const pend = pendentes();
+  $('#kpis').innerHTML = [
+    ['Alunos', alunos.length, `${S.turmas.length} turmas`],
+    ['Aulas registradas', aulas.length, aulas.length ? `última em ${fmtDate(aulas.map(a => a.data).sort().at(-1))}` : 'nenhuma chamada ainda'],
+    ['Chamadas pendentes', pend.length, 'últimos 15 dias'],
+    ['Presença geral', taxa === null ? '—' : taxa + '%', `meta: ${meta}%` + (taxa === null ? '' : taxa >= meta ? ' · ✓ acima' : ' · abaixo')],
+    ['Faltas', tot.F, `${tot.P} presenças`],
+    ['Precisam de atenção', risco.length, 'abaixo da meta ou faltando seguido'],
+  ].map(([l, v, h]) => `<div class="card kpi"><div class="lbl">${l}</div><div class="val">${v}</div><div class="hint">${h}</div></div>`).join('');
+
+  const byDep = deps().map(d => st.filter(x => x.a.departamento === d).reduce((o, {s}) => (o.P += s.P, o.F += s.F, o), {d, P: 0, F: 0})).filter(x => x.P + x.F > 0);
+  const ds = (k, color) => ({label: LABEL[k], data: byDep.map(x => x[k]), backgroundColor: css(color), borderColor: css('--surface'), borderWidth: {top: 2}, borderRadius: 4, borderSkipped: 'bottom', maxBarThickness: 34});
+  mkChart('cDep', {type: 'bar', data: {labels: byDep.map(x => x.d), datasets: [ds('P', '--s-pres'), ds('F', '--s-falta')]},
+    options: {scales: {x: {stacked: true, grid: {display: false}}, y: {stacked: true, beginAtZero: true, ticks: {precision: 0}}},
+      interaction: {mode: 'index', intersect: false},
+      plugins: {tooltip: {callbacks: {footer: items => { const x = byDep[items[0].dataIndex]; return `Presença: ${pct(x.P, x.P + x.F)}%`; }}}}}});
+
+  const datas = [...new Set(aulas.map(a => a.data))].sort(), ids = new Set(alunos.map(a => a.id));
+  const evo = datas.map(d => { let p = 0, t = 0; aulas.filter(a => a.data === d).forEach(a => Object.entries(a.reg).forEach(([k, v]) => { if (ids.has(k)) { t++; if (v === 'P') p++; } })); return pct(p, t); });
+  mkChart('cEvo', {type: 'line', data: {labels: datas.map(fmtDate), datasets: [
+      {label: 'Presença', data: evo, borderColor: css('--s-pres'), backgroundColor: css('--s-pres'), borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, pointBorderColor: css('--surface'), pointBorderWidth: 2, tension: .25, spanGaps: true},
+      {label: 'Meta', data: datas.map(() => meta), borderColor: css('--muted'), borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0, pointHoverRadius: 0}]},
+    options: {interaction: {mode: 'index', intersect: false}, scales: {y: {min: 0, max: 100, ticks: {callback: v => v + '%'}}, x: {grid: {display: false}}},
+      plugins: {tooltip: {callbacks: {label: c => `${c.dataset.label}: ${c.raw}%`}}}}});
+
+  const byT = S.turmas.filter(t => !ft || t.id === ft).map(t => { let p = 0, n = 0; aulas.filter(a => a.turmaId === t.id).forEach(a => Object.entries(a.reg).forEach(([k, v]) => { if (ids.has(k)) { n++; if (v === 'P') p++; } })); return {t: t.nome, v: pct(p, n), n}; }).filter(x => x.v !== null).sort((a, b) => b.v - a.v);
+  $('#chTurmaBox').style.height = Math.max(200, byT.length * 30 + 40) + 'px';
+  mkChart('chTurma', {type: 'bar', data: {labels: byT.map(x => short(x.t)), datasets: [{label: 'Presença', data: byT.map(x => x.v), backgroundColor: css('--s-pres'), borderRadius: 4, borderSkipped: 'start', maxBarThickness: 20}]},
+    options: {indexAxis: 'y', scales: {x: {min: 0, max: 100, ticks: {callback: v => v + '%'}}, y: {grid: {display: false}}},
+      plugins: {tooltip: {callbacks: {title: i => byT[i[0].dataIndex].t, label: c => `Presença: ${c.raw}% (${byT[c.dataIndex].n} registros)`}}}}});
+
+  const byN = niveis().map(m => ({m, n: alunos.filter(a => a.nivel === m).length})).filter(x => x.n);
+  mkChart('cNivel', {type: 'bar', data: {labels: byN.map(x => x.m), datasets: [{label: 'Alunos', data: byN.map(x => x.n), backgroundColor: css('--s-pres'), borderRadius: 4, borderSkipped: 'start', maxBarThickness: 22}]},
+    options: {indexAxis: 'y', scales: {x: {beginAtZero: true, ticks: {precision: 0}}, y: {grid: {display: false}}}}});
+
+  risco.sort((a, b) => (a.s.taxa ?? 0) - (b.s.taxa ?? 0));
+  $('#risco').innerHTML = risco.length ? `<table><thead><tr><th>Aluno</th><th>Departamento</th><th>Turma(s)</th><th class="num">P</th><th class="num">F</th><th class="num">Presença</th><th class="num">Faltas seguidas</th><th>Status</th></tr></thead><tbody>` +
+    risco.map(({a, s}) => { const [c, l] = status(s); return `<tr><td>${esc(a.nome)}</td><td>${esc(a.departamento)}</td><td>${esc(turmasDo(a.id).map(t => short(t.nome, 26)).join(', '))}</td><td class="num">${s.P}</td><td class="num">${s.F}</td><td class="num">${s.taxa}%</td><td class="num">${s.seguidas}</td><td><span class="pill ${c}">${l}</span></td></tr>`; }).join('') + '</tbody></table>'
+    : `<div class="empty">${S.aulas.length ? 'Ninguém abaixo da meta. 🎉' : 'Registre a primeira chamada para ver os indicadores.'}</div>`;
+}
+['fTurma', 'fDep', 'fDe', 'fAte'].forEach(i => $('#' + i).addEventListener('change', renderPainel));
+$('#fLimpar').onclick = () => { ['fTurma', 'fDep', 'fDe', 'fAte'].forEach(i => $('#' + i).value = ''); renderPainel(); };
+
+/* ---------- CRONOGRAMA ---------- */
+let semana = (() => { const d = new Date(); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return iso(d); })();
+function renderCrono() {
+  const dias = [0, 1, 2, 3, 4, 5].map(i => addDays(semana, i));
+  $('#wLabel').textContent = `${fmtDate(dias[0])} a ${fmtDate(dias[5])}/${dias[5].slice(0, 4)}`;
+  $('#weekBox').innerHTML = dias.map(d => {
+    const occ = ocorrencias(d);
+    return `<div class="day${d === today() ? ' today' : ''}"><h3><b>${DIA_L[parse(d).getDay()]}</b><span>${fmtDate(d)}</span></h3>
+      ${occ.map(occCard).join('') || '<p class="note">Sem aulas</p>'}</div>`;
+  }).join('');
+  const sem = S.turmas.filter(t => !t.slots.length);
+  $('#semHorario').innerHTML = sem.length ? `<div class="card" style="margin-top:14px"><h2>Turmas sem horário fixo</h2><p class="desc">Não aparecem no cronograma. Defina um horário em Turmas ou lance uma aula extra.</p><div class="chips">${sem.map(t => `<span class="chip">${esc(t.nome)}</span>`).join('')}</div></div>` : '';
+}
+$('#wPrev').onclick = () => { semana = addDays(semana, -7); renderCrono(); };
+$('#wNext').onclick = () => { semana = addDays(semana, 7); renderCrono(); };
+$('#wHoje').onclick = () => { const d = new Date(); d.setDate(d.getDate() - (d.getDay() + 6) % 7); semana = iso(d); renderCrono(); };
+$('#wExtra').onclick = () => {
+  if (!S.turmas.length) return toast('Crie uma turma primeiro');
+  openDlg(`<h3>Aula extra / reposição</h3><p class="note" style="margin:0 0 12px">Aparece só na data escolhida, sem mudar o horário fixo da turma.</p>
+    <div class="form"><label>Turma<select id="eT">${opts(turmaOpts())}</select></label>
+    <div class="two"><label>Data<input type="date" id="eD" value="${today()}" required></label><label>Motivo (opcional)<input id="eM" placeholder="Ex.: reposição, reforço"></label></div>
+    <div class="two"><label>Início<input type="time" id="eI" value="09:00" required></label><label>Fim<input type="time" id="eF" value="10:00" required></label></div></div>
+    <div class="actions"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn pri" value="ok">Adicionar</button></div>`,
+  () => { S.excecoes.push({id: uid(), turmaId: $('#eT').value, data: $('#eD').value, tipo: 'extra', ini: $('#eI').value, fim: $('#eF').value, motivo: $('#eM').value.trim()}); save(); renderCrono(); toast('Aula extra adicionada'); });
+};
+
+/* ---------- CHAMADA ---------- */
+let draft = {}, draftObs = {};
+function abrirChamada(turmaId, data) { go('chamada'); $('#cTurma').value = turmaId; $('#cData').value = data; renderChamada(); }
+function currentAula() { return S.aulas.find(a => a.turmaId === $('#cTurma').value && a.data === $('#cData').value); }
+function loadDraft() { const au = currentAula(); draft = au ? {...au.reg} : {}; draftObs = au ? {...(au.obs || {})} : {}; $('#cTema').value = au?.tema || ''; }
+function renderChamada(reload = true) {
+  if (!S.turmas.length) {
+    $('#chamadaBox').innerHTML = `<div class="empty"><b>Nenhuma turma ainda</b>Crie uma turma para fazer a chamada.<br><br><button class="btn pri" onclick="go('turmas')">Criar turma</button></div>`;
+    $('#matrix').innerHTML = ''; $('#cTurma').innerHTML = ''; return;
+  }
+  const cur = $('#cTurma').value;
+  $('#cTurma').innerHTML = opts(turmaOpts(), turmaById(cur) ? cur : S.turmas[0].id);
+  if (!$('#cData').value) $('#cData').value = today();
+  if (reload) loadDraft();
+  const t = turmaById($('#cTurma').value), data = $('#cData').value, au = currentAula();
+  const lista = t.alunos.map(alunoById).filter(Boolean);
+  Object.keys(draft).forEach(id => { if (!t.alunos.includes(id) && alunoById(id)) lista.push(alunoById(id)); });
+  const c = {P: 0, F: 0}; lista.forEach(a => draft[a.id] && c[draft[a.id]]++);
+  const prevista = ocorrencias(data).some(o => o.turma === t && !o.cancelada);
+  $('#chamadaBox').innerHTML = !lista.length ? `<div class="empty"><b>Turma sem alunos</b>Adicione alunos editando a turma na aba Turmas.</div>` : `
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <div><h2>${au ? 'Editando chamada · ' : 'Nova chamada · '}${DIA_L[parse(data).getDay()]}, ${fmtDate(data)}</h2>
+      <p class="desc" style="margin:0">${lista.length} alunos · ${c.P} presentes · ${c.F} faltas · ${lista.length - c.P - c.F} sem marcação${prevista ? '' : ' · <b>sem aula prevista no cronograma nesta data</b>'}</p></div>
+      <div class="row"><button class="btn" id="todosP">Todos presentes</button>${au ? '<button class="btn danger" id="delAula">Excluir chamada</button>' : ''}<button class="btn pri" id="salvarCh">Salvar chamada</button></div>
+    </div>
+    <div class="tablewrap"><table><thead><tr><th>Aluno</th><th>Departamento</th><th>Nível</th><th>Marcação</th><th style="width:40%">Observação</th></tr></thead><tbody>
+    ${lista.map(a => `<tr><td>${esc(a.nome)}</td><td>${esc(a.departamento)}</td><td>${esc(a.nivel)}</td><td><div class="seg" data-a="${a.id}">${['P', 'F'].map(v => `<button type="button" data-v="${v}" class="${draft[a.id] === v ? 'on' : ''}">${LABEL[v]}</button>`).join('')}</div></td>
+      <td><input class="obs" data-a="${a.id}" value="${esc(draftObs[a.id] || '')}" placeholder="Ex.: atrasou 10 min"></td></tr>`).join('')}
+    </tbody></table></div>`;
+  renderMatrix(t);
+}
+$('#chamadaBox').addEventListener('click', e => {
+  const b = e.target.closest('.seg button');
+  if (b) { const id = b.parentElement.dataset.a; if (draft[id] === b.dataset.v) delete draft[id]; else draft[id] = b.dataset.v; renderChamada(false); return; }
+  if (e.target.id === 'todosP') { turmaById($('#cTurma').value).alunos.forEach(id => draft[id] = 'P'); renderChamada(false); }
+  if (e.target.id === 'salvarCh') {
+    if (!Object.keys(draft).length) return toast('Marque pelo menos um aluno');
+    let au = currentAula();
+    if (!au) { au = {id: uid(), turmaId: $('#cTurma').value, data: $('#cData').value}; S.aulas.push(au); }
+    const obs = Object.fromEntries(Object.entries(draftObs).filter(([, v]) => v.trim()));
+    Object.assign(au, {reg: {...draft}, obs, tema: $('#cTema').value.trim()}); save(); toast('Chamada salva'); renderChamada();
+  }
+  if (e.target.id === 'delAula' && confirm('Excluir a chamada desta data?')) { S.aulas = S.aulas.filter(a => a !== currentAula()); save(); renderChamada(); toast('Chamada excluída'); }
+});
+$('#chamadaBox').addEventListener('input', e => { if (e.target.classList.contains('obs')) draftObs[e.target.dataset.a] = e.target.value; });
+$('#cTurma').addEventListener('change', () => renderChamada());
+$('#cData').addEventListener('change', () => renderChamada());
+
+function renderMatrix(t) {
+  const aulas = S.aulas.filter(a => a.turmaId === t.id).sort((a, b) => a.data.localeCompare(b.data));
+  const lista = t.alunos.map(alunoById).filter(Boolean), ex = new Set(t.alunos);
+  aulas.forEach(au => Object.keys(au.reg).forEach(id => { if (!ex.has(id) && alunoById(id)) { lista.push(alunoById(id)); ex.add(id); } }));
+  if (!aulas.length) { $('#matrix').innerHTML = '<div class="empty">Nenhuma chamada registrada nesta turma ainda.</div>'; return; }
+  $('#matrix').innerHTML = `<table class="matrix"><thead><tr><th>Aluno</th>${aulas.map(au => `<th class="date" data-d="${au.data}" title="${esc(au.tema || '')}">${DIA[parse(au.data).getDay()]} ${fmtDate(au.data)}<small>${pct(Object.values(au.reg).filter(v => v === 'P').length, Object.keys(au.reg).length)}%</small></th>`).join('')}<th class="num">P</th><th class="num">F</th><th class="num">%</th></tr></thead><tbody>` +
+    lista.map(a => { const s = statsAluno(a.id, aulas); return `<tr><td>${esc(a.nome)}${t.alunos.includes(a.id) ? '' : ' <span class="note">(saiu)</span>'}</td>${aulas.map(au => { const o = au.obs?.[a.id]; return `<td class="cell${o ? ' has-obs' : ''}" data-au="${au.id}" data-a="${a.id}" data-v="${au.reg[a.id] || ''}" title="${esc(o || '')}">${au.reg[a.id] || '·'}</td>`; }).join('')}<td class="num">${s.P}</td><td class="num">${s.F}</td><td class="num">${s.taxa === null ? '—' : s.taxa + '%'}</td></tr>`; }).join('') + '</tbody></table>';
+}
+$('#matrix').addEventListener('click', e => {
+  const c = e.target.closest('td.cell');
+  if (c) {
+    const au = S.aulas.find(x => x.id === c.dataset.au), nx = {'': 'P', P: 'F', F: ''}[au.reg[c.dataset.a] || ''];
+    if (nx) au.reg[c.dataset.a] = nx; else delete au.reg[c.dataset.a];
+    save(); renderChamada(); return;
+  }
+  const h = e.target.closest('th.date');
+  if (h) { $('#cData').value = h.dataset.d; renderChamada(); window.scrollTo({top: 0, behavior: 'smooth'}); }
+});
+
+/* ---------- TURMAS ---------- */
+function turmaStats(t) { let p = 0, n = 0; S.aulas.filter(a => a.turmaId === t.id).forEach(au => Object.values(au.reg).forEach(v => { n++; if (v === 'P') p++; })); return {tx: pct(p, n), aulas: S.aulas.filter(a => a.turmaId === t.id).length}; }
+function renderTurmas() {
+  if (!S.turmas.length) { $('#turmasBox').innerHTML = `<div class="card empty" style="grid-column:1/-1"><b>Nenhuma turma</b>Crie a primeira turma: escolha os alunos e os horários da semana.</div>`; return; }
+  const q = norm($('#tBusca').value);
+  const list = S.turmas.filter(t => !q || norm(t.nome + ' ' + t.alunos.map(id => alunoById(id)?.nome).join(' ')).includes(q));
+  $('#turmasBox').innerHTML = list.map(t => {
+    const {tx, aulas} = turmaStats(t), al = t.alunos.map(alunoById).filter(Boolean);
+    return `<div class="card turma"><h3>${esc(t.nome)}</h3>
+      <div class="meta">${esc(t.nivel || 'Nível não definido')} · ${al.length} aluno(s)</div>
+      <div class="note" style="margin-bottom:8px">🕘 ${t.slots.length ? esc(horariosTxt(t)) : 'Sem horário fixo'}</div>
+      <div class="chips" style="margin-bottom:10px">${al.map(a => `<span class="chip" title="${esc(a.departamento)}">${esc(a.nome)}</span>`).join('')}</div>
+      <div class="row" style="justify-content:space-between;font-size:12px;color:var(--text-2)"><span>${aulas} chamada(s)</span><b style="color:var(--text)">${tx === null ? '—' : tx + '% presença'}</b></div>
+      <div class="bar" style="margin:6px 0 12px"><span style="width:${tx || 0}%"></span></div>
+      <div class="row"><button class="btn sm" data-ch="${t.id}">Chamada</button><button class="btn sm" data-ed="${t.id}">Editar</button>${t.link ? `<a class="btn sm" href="${esc(t.link)}" target="_blank" rel="noopener">Meet</a>` : ''}</div></div>`;
+  }).join('') || '<div class="card empty" style="grid-column:1/-1">Nenhuma turma encontrada.</div>';
+}
+function slotRow(s = {dia: 1, ini: '09:00', fim: '10:00'}) {
+  return `<div class="slotrow"><select class="sD">${[1, 2, 3, 4, 5, 6].map(d => `<option value="${d}"${+s.dia === d ? ' selected' : ''}>${DIA_L[d]}</option>`).join('')}</select>
+    <input type="time" class="sI" value="${s.ini}" required><input type="time" class="sF" value="${s.fim}" required><button type="button" class="btn sm sX" title="Remover horário">✕</button></div>`;
+}
+function turmaDlg(t) {
+  const novo = !t; t = t || {id: uid(), nome: '', nivel: '', link: '', alunos: [], slots: []};
+  const byDep = {};  // quem já está na turma aparece primeiro
+  S.alunos.slice().sort((a, b) => a.nome.localeCompare(b.nome)).forEach(a => (byDep[t.alunos.includes(a.id) ? ' Nesta turma' : a.departamento || 'Sem departamento'] ||= []).push(a));
+  openDlg(`<h3>${novo ? 'Nova turma' : 'Editar turma'}</h3><p class="note" style="margin:0 0 12px">Se deixar o nome em branco, ele é montado com os nomes dos alunos.</p>
+    <div class="form">
+      <label>Nome da turma<input id="tN" value="${esc(t.nome)}" placeholder="Ex.: Carla / Sara"></label>
+      <div class="two"><label>Nível<select id="tL">${opts(niveis(), t.nivel, '—')}</select></label><label>Link do Meet (opcional)<input id="tK" type="url" value="${esc(t.link)}" placeholder="https://meet.google.com/…"></label></div>
+      <div><div class="note" style="margin-bottom:6px"><b>Horários fixos na semana</b></div><div id="slots">${t.slots.map(slotRow).join('')}</div>
+        <button type="button" class="btn sm" id="addSlot">+ Horário</button></div>
+      <div><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="note"><b>Alunos</b> · <span id="selN">${t.alunos.length}</span> selecionado(s)</span><input id="pickQ" placeholder="Filtrar…" style="min-height:28px;padding:3px 8px;max-width:180px"></div>
+        <div class="picklist" id="pick">${Object.entries(byDep).sort().map(([d, as]) => `<div class="grp">${esc(d)}</div>` + as.map(a => `<label data-q="${esc(norm(a.nome + ' ' + d))}"><input type="checkbox" value="${a.id}"${t.alunos.includes(a.id) ? ' checked' : ''}>${esc(a.nome)} <small>${esc(a.nivel)}${turmasDo(a.id).filter(x => x.id !== t.id).length ? ' · já em ' + turmasDo(a.id).filter(x => x.id !== t.id).length + ' turma(s)' : ''}</small></label>`).join('')).join('') || '<p class="note">Cadastre alunos primeiro na aba Alunos.</p>'}</div></div>
+    </div>
+    <div class="actions">${novo ? '' : '<button class="btn danger" value="del" formnovalidate style="margin-right:auto">Excluir turma</button>'}<button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn pri" value="ok">Salvar</button></div>`,
+  v => {
+    if (v === 'del') {
+      if (!confirm('Excluir a turma e todas as chamadas dela? Os alunos continuam cadastrados.')) return;
+      S.turmas = S.turmas.filter(x => x.id !== t.id); S.aulas = S.aulas.filter(a => a.turmaId !== t.id); S.excecoes = S.excecoes.filter(e => e.turmaId !== t.id);
+    } else {
+      const alunos = [...document.querySelectorAll('#pick input:checked')].map(i => i.value);
+      const slots = [...document.querySelectorAll('#slots .slotrow')].map(r => ({dia: +r.querySelector('.sD').value, ini: r.querySelector('.sI').value, fim: r.querySelector('.sF').value})).filter(s => s.ini && s.fim);
+      const nome = $('#tN').value.trim() || alunos.map(id => alunoById(id).nome.split(' ')[0]).join(' / ') || 'Nova turma';
+      Object.assign(t, {nome, nivel: $('#tL').value, link: $('#tK').value.trim(), alunos, slots});
+      if (novo) S.turmas.push(t);
+      toast('Turma salva');
+    }
+    save(); renderTurmas();
+  },
+  () => {
+    $('#addSlot').onclick = () => $('#slots').insertAdjacentHTML('beforeend', slotRow());
+    $('#slots').onclick = e => { if (e.target.classList.contains('sX')) e.target.closest('.slotrow').remove(); };
+    $('#pick').onchange = () => $('#selN').textContent = document.querySelectorAll('#pick input:checked').length;
+    $('#pickQ').oninput = e => { const q = norm(e.target.value); document.querySelectorAll('#pick label').forEach(l => l.style.display = l.dataset.q.includes(q) ? '' : 'none'); };
+  });
+}
+$('#tNova').onclick = () => turmaDlg();
+$('#tBusca').addEventListener('input', renderTurmas);
+$('#turmasBox').addEventListener('click', e => {
+  const ed = e.target.closest('[data-ed]'), ch = e.target.closest('[data-ch]');
+  if (ed) turmaDlg(turmaById(ed.dataset.ed));
+  if (ch) abrirChamada(ch.dataset.ch, today());
+});
+
+/* ---------- ALUNOS ---------- */
+function renderAlunos() {
+  const keep = ['aTurma', 'aDep', 'aNivel'].map(i => $('#' + i).value);
+  $('#aTurma').innerHTML = opts([['__sem', 'Sem turma'], ...turmaOpts()], keep[0], 'Todas');
+  $('#aDep').innerHTML = opts(deps(), keep[1], 'Todos');
+  $('#aNivel').innerHTML = opts(niveis(), keep[2], 'Todos');
+  const q = norm($('#aBusca').value), [ft, fd, fn] = keep;
+  const list = S.alunos.filter(a => (!q || norm([a.nome, a.departamento, a.nivel, a.obs].join(' ')).includes(q)) &&
+    (!ft || (ft === '__sem' ? !turmasDo(a.id).length : turmaById(ft)?.alunos.includes(a.id))) && (!fd || a.departamento === fd) && (!fn || a.nivel === fn));
+  if (!S.alunos.length) { $('#alunosTbl').innerHTML = `<div class="empty"><b>Nenhum aluno cadastrado</b>Adicione um por um ou cole a lista direto do Excel.</div>`; return; }
+  $('#alunosTbl').innerHTML = `<table class="sheet"><thead><tr><th></th><th>Nome</th><th>Departamento</th><th>Nível</th><th>Turma(s)</th><th class="num">P</th><th class="num">F</th><th class="num">Presença</th><th>Status</th><th>Observações</th><th></th></tr></thead><tbody>` +
+    list.map((a, i) => { const s = statsAluno(a.id), [c, l] = status(s), ts = turmasDo(a.id); return `<tr data-id="${a.id}">
+      <td class="rown">${i + 1}</td>
+      <td><input data-f="nome" value="${esc(a.nome)}" style="min-width:170px"></td>
+      <td><select data-f="departamento">${opts(deps(), a.departamento, '—')}</select></td>
+      <td><select data-f="nivel">${opts(niveis(), a.nivel, '—')}</select></td>
+      <td class="ro" title="${esc(ts.map(t => t.nome).join('\n'))}">${ts.length ? esc(short(ts.map(t => t.nome).join(' + '), 34)) : '<span class="pill warn">Sem turma</span>'}</td>
+      <td class="num">${s.P}</td><td class="num">${s.F}</td>
+      <td class="num">${s.taxa === null ? '—' : s.taxa + '%'}</td>
+      <td class="ro"><span class="pill ${c}">${l}</span></td>
+      <td><input data-f="obs" value="${esc(a.obs)}" style="min-width:160px"></td>
+      <td class="ro"><button class="btn danger sm" data-del title="Remover aluno">✕</button></td></tr>`; }).join('') +
+    `</tbody></table>${list.length ? '' : '<div class="empty">Nenhum aluno com esses filtros.</div>'}`;
+}
+$('#alunosTbl').addEventListener('change', e => {
+  const el = e.target.closest('[data-f]'); if (!el) return;
+  alunoById(el.closest('tr').dataset.id)[el.dataset.f] = el.value.trim(); save(); toast('Salvo');
+});
+$('#alunosTbl').addEventListener('click', e => {
+  if (!e.target.closest('[data-del]')) return;
+  const id = e.target.closest('tr').dataset.id, a = alunoById(id);
+  if (!confirm(`Remover ${a.nome}? O histórico de presença também sai dos gráficos.`)) return;
+  S.alunos = S.alunos.filter(x => x.id !== id); S.turmas.forEach(t => t.alunos = t.alunos.filter(x => x !== id));
+  S.aulas.forEach(au => { delete au.reg[id]; if (au.obs) delete au.obs[id]; }); save(); renderAlunos();
+});
+['aTurma', 'aDep', 'aNivel'].forEach(i => $('#' + i).addEventListener('change', renderAlunos));
+$('#aBusca').addEventListener('input', renderAlunos);
+$('#aNovo').onclick = () => {
+  S.alunos.unshift({id: uid(), nome: '', departamento: '', nivel: S.config.niveis[0] || '', obs: ''});
+  save(); $('#aBusca').value = ''; ['aTurma', 'aDep', 'aNivel'].forEach(i => $('#' + i).value = ''); renderAlunos(); $('#alunosTbl input[data-f=nome]')?.focus();
+};
+$('#aColar').onclick = () => openDlg(`<h3>Colar alunos do Excel</h3>
+  <p class="note">Selecione as linhas na planilha (pode incluir o cabeçalho), copie com Ctrl+C e cole abaixo. Sem cabeçalho, a ordem esperada é: <b>Nome · Departamento · Nível</b>. Alunos que já existem são atualizados.</p>
+  <textarea id="pasteTxt" rows="10" style="width:100%" placeholder="Nome&#9;Departamento&#9;Nível"></textarea>
+  <div class="actions"><button class="btn" value="cancel">Cancelar</button><button class="btn pri" value="ok">Importar</button></div>`,
+  () => {
+    const lines = $('#pasteTxt').value.split(/\r?\n/).filter(l => l.trim());
+    if (!lines.length) return;
+    const sep = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ',';
+    let rows = lines.map(l => l.split(sep).map(c => c.trim())), map = {nome: 0, departamento: 1, nivel: 2};
+    const h = rows[0].map(norm);
+    if (h.some(c => /^(nome|aluno)/.test(c))) {
+      map = {}; h.forEach((c, i) => { if (/^(nome|aluno)/.test(c)) map.nome ??= i; else if (/depart|setor|area/.test(c)) map.departamento ??= i; else if (/nivel|modul/.test(c)) map.nivel ??= i; else if (/obs/.test(c)) map.obs ??= i; });
+      rows = rows.slice(1);
+    }
+    const loose = s => norm(s).replace(/s\b/g, '');
+    const match = (list, v) => list.find(x => loose(x) === loose(v));
+    let n = 0;
+    rows.forEach(r => {
+      const g = k => map[k] !== undefined ? (r[map[k]] || '') : '';
+      const nome = g('nome'); if (!nome) return;
+      let dep = g('departamento'), niv = g('nivel');
+      if (dep) { dep = match(S.config.departamentos, dep) || dep; if (!match(S.config.departamentos, dep)) S.config.departamentos.push(dep); }
+      if (niv) { niv = match(S.config.niveis, niv) || niv; if (!match(S.config.niveis, niv)) S.config.niveis.push(niv); }
+      const data = {nome, departamento: dep, nivel: niv, obs: g('obs')};
+      const ex = S.alunos.find(a => norm(a.nome) === norm(nome) && (!dep || norm(a.departamento) === norm(dep)));
+      if (ex) Object.assign(ex, Object.fromEntries(Object.entries(data).filter(([, v]) => v))); else S.alunos.push({id: uid(), ...data});
+      n++;
+    });
+    save(); renderAlunos(); toast(`${n} aluno(s) importado(s)`);
+  });
+
+/* ---------- diálogo ---------- */
+function openDlg(html, onOk, onMount) {
+  const d = $('#dlg');
+  $('#dlgForm').innerHTML = '<button type="button" class="dlg-x" aria-label="Fechar" title="Fechar" onclick="this.closest(\'dialog\').close(\'cancel\')">✕</button>' + html;
+  d.onclose = () => { if (d.returnValue && d.returnValue !== 'cancel') onOk(d.returnValue); };
+  d.returnValue = ''; d.showModal(); onMount?.();
+}
+
+$('#dlg').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close('cancel'); });  // clique fora fecha
+
+/* ---------- DADOS ---------- */
+function renderDados() {
+  $('#lDeps').value = S.config.departamentos.join('\n');
+  $('#lNiveis').value = S.config.niveis.join('\n');
+  $('#lMeta').value = S.config.meta;
+  $('#lastBackup').textContent = S.lastBackup ? `Último backup: ${new Date(S.lastBackup).toLocaleString('pt-BR')}` : 'Nenhum backup feito ainda.';
+}
+$('#lSalvar').onclick = () => {
+  const L = id => $(id).value.split('\n').map(s => s.trim()).filter(Boolean);
+  S.config.departamentos = L('#lDeps'); S.config.niveis = L('#lNiveis');
+  S.config.meta = Math.max(0, Math.min(100, +$('#lMeta').value || 75)); save(); toast('Listas salvas');
+};
+function download(name, text, type) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+const csv = rows => '﻿' + rows.map(r => r.map(c => { c = String(c ?? ''); return /[;"\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c; }).join(';')).join('\r\n');
+const brDate = s => s.split('-').reverse().join('/');
+$('#xAlunos').onclick = () => download(`alunos-espanol-${today()}.csv`, csv([['Nome', 'Departamento', 'Nível', 'Turmas', 'Presenças', 'Faltas', 'Presença %', 'Status', 'Observações'],
+  ...S.alunos.map(a => { const s = statsAluno(a.id); return [a.nome, a.departamento, a.nivel, turmasDo(a.id).map(t => t.nome).join(' + '), s.P, s.F, s.taxa ?? '', status(s)[1].replace(/^\W+\s*/, ''), a.obs]; })]), 'text/csv');
+$('#xChamada').onclick = () => download(`chamadas-espanol-${today()}.csv`, csv([['Data', 'Dia', 'Turma', 'Conteúdo', 'Aluno', 'Departamento', 'Marcação', 'Observação'],
+  ...S.aulas.slice().sort((a, b) => a.data.localeCompare(b.data)).flatMap(au => Object.entries(au.reg).map(([id, v]) => { const a = alunoById(id) || {}; return [brDate(au.data), DIA_L[parse(au.data).getDay()], turmaById(au.turmaId)?.nome, au.tema, a.nome, a.departamento, LABEL[v], au.obs?.[id]]; }))]), 'text/csv');
+$('#xCrono').onclick = () => download(`cronograma-espanol-${today()}.csv`, csv([['Dia', 'Início', 'Fim', 'Turma', 'Nível', 'Alunos', 'Link'],
+  ...S.turmas.flatMap(t => t.slots.map(s => [s.dia, DIA_L[s.dia], s.ini, s.fim, t.nome, t.nivel, t.alunos.map(id => alunoById(id)?.nome).join(', '), t.link]))
+    .sort((a, b) => a[0] - b[0] || a[2].localeCompare(b[2])).map(r => r.slice(1))]), 'text/csv');
+function baixarBackup() { S.lastBackup = Date.now(); save(); download(`backup-espanol-unicpo-${today()}.json`, JSON.stringify(S, null, 1), 'application/json'); render(); }
+async function restaurar(input) {
+  const f = input.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text()); if (!d.alunos || !d.turmas || d.v !== 2) throw 0;
+    if (S.alunos.length && !confirm('Substituir os dados atuais pelos do arquivo?')) return;
+    S = d; save(); toast('Dados restaurados'); render();
+  } catch { toast('Arquivo inválido'); } finally { input.value = ''; }
+}
+$('#xBackup').onclick = baixarBackup;
+$('#xRestore').onchange = e => restaurar(e.target);
+$('#xApagar').onclick = () => { if (confirm('Apagar TODAS as turmas, alunos, cronograma e chamadas deste navegador?')) { S = blank(); save(); toast('Dados apagados'); renderDados(); } };
+
+render();
+</script>
+</body>
+</html>
