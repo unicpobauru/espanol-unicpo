@@ -79,6 +79,13 @@ function escreve(nome, cab, linhas) {
 }
 
 function data(s) { const p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+// segunda-feira da semana da data (as semanas vão de segunda a sábado)
+function segunda(s) { const d = data(s); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d; }
+function semanaTxt(seg) {
+  const fim = new Date(seg); fim.setDate(fim.getDate() + 5);
+  const f = d => Utilities.formatDate(d, 'America/Sao_Paulo', 'dd/MM');
+  return f(seg) + ' a ' + f(fim) + '/' + fim.getFullYear();
+}
 
 function atualizarAbas(d) {
   const alunos = {}, turmas = {};
@@ -103,8 +110,18 @@ function atualizarAbas(d) {
   const ch = [];
   d.aulas.slice().sort((a, b) => a.data < b.data ? -1 : 1).forEach(au => Object.keys(au.reg).forEach(id => {
     const a = alunos[id] || {};
-    ch.push([data(au.data), DIA_L[data(au.data).getDay()], turmas[au.turmaId] ? turmas[au.turmaId].nome : '', a.nome || '', a.departamento || '',
+    ch.push([semanaTxt(segunda(au.data)), data(au.data), DIA_L[data(au.data).getDay()], turmas[au.turmaId] ? turmas[au.turmaId].nome : '', a.nome || '', a.departamento || '',
       au.reg[id] === 'P' ? 'Presença' : 'Falta', (au.obs && au.obs[id]) || '', au.tema || '']);
   }));
-  escreve('Chamadas', ['Data', 'Dia', 'Turma', 'Aluno', 'Departamento', 'Marcação', 'Observação', 'Conteúdo'], ch);
+  escreve('Chamadas', ['Semana', 'Data', 'Dia', 'Turma', 'Aluno', 'Departamento', 'Marcação', 'Observação', 'Conteúdo'], ch);
+
+  const sem = {};
+  d.aulas.forEach(au => {
+    const k = segunda(au.data).getTime();
+    const w = sem[k] = sem[k] || {aulas: 0, p: 0, f: 0};
+    w.aulas++;
+    Object.keys(au.reg).forEach(id => { au.reg[id] === 'P' ? w.p++ : w.f++; });
+  });
+  escreve('Semanas', ['Semana', 'Chamadas', 'Presenças', 'Faltas', 'Presença %'],
+    Object.keys(sem).sort((a, b) => b - a).map(k => { const w = sem[k]; return [semanaTxt(new Date(+k)), w.aulas, w.p, w.f, w.p + w.f ? Math.round(w.p / (w.p + w.f) * 100) : '']; }));
 }

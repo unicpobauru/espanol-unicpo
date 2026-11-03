@@ -153,6 +153,9 @@ dialog h3{margin:0 0 4px}
 #login input{width:100%;margin:14px 0 8px;text-align:center}
 #login .btn{width:100%;justify-content:center}
 #loginErr{color:var(--crit);font-size:13px;min-height:18px}
+.weekbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.weekbar select{font-weight:600;min-width:250px}
+.weekbar.hide{display:none}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:9px 16px;border-radius:10px;font-weight:500;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
 .note{font-size:12px;color:var(--text-2)}
@@ -182,6 +185,13 @@ dialog h3{margin:0 0 4px}
 </header>
 
 <main>
+  <div class="weekbar" id="weekbar">
+    <button class="btn" id="wPrev" title="Semana anterior">◀</button>
+    <select id="wSel"></select>
+    <button class="btn" id="wNext" title="Próxima semana">▶</button>
+    <button class="btn" id="wHoje">Esta semana</button>
+    <span class="note" id="wInfo"></span>
+  </div>
   <!-- PAINEL -->
   <section class="view on" id="v-painel">
     <div id="backupBanner"></div>
@@ -192,8 +202,6 @@ dialog h3{margin:0 0 4px}
     <div class="toolbar">
       <label>Turma<select id="fTurma"></select></label>
       <label>Departamento<select id="fDep"></select></label>
-      <label>De<input type="date" id="fDe"></label>
-      <label>Até<input type="date" id="fAte"></label>
       <button class="btn" id="fLimpar">Limpar filtros</button>
     </div>
     <div class="grid kpis" id="kpis"></div>
@@ -204,10 +212,15 @@ dialog h3{margin:0 0 4px}
         <div class="legend"><span><i style="background:var(--s-pres)"></i>Presença</span><span><i style="background:var(--s-falta)"></i>Falta</span></div>
         <div class="chartbox"><canvas id="cDep"></canvas></div>
       </div>
-      <div class="card">
-        <h2>Evolução da presença</h2>
-        <p class="desc">% de presença em cada dia de aula · linha tracejada = meta</p>
+      <div class="card" id="evoCard">
+        <h2>Presença dia a dia</h2>
+        <p class="desc">% de presença de segunda a sábado · linha tracejada = meta</p>
         <div class="chartbox"><canvas id="cEvo"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Histórico por semana</h2>
+        <p class="desc">% de presença de cada semana · clique numa barra para abrir a semana</p>
+        <div class="chartbox"><canvas id="cSem"></canvas></div>
       </div>
       <div class="card">
         <h2>Presença por turma</h2>
@@ -222,7 +235,7 @@ dialog h3{margin:0 0 4px}
     </div>
     <div class="card" style="margin-top:14px">
       <h2>Precisam de atenção</h2>
-      <p class="desc">Presença abaixo da meta ou 2+ faltas seguidas</p>
+      <p class="desc" id="riscoDesc">Presença abaixo da meta ou 2+ faltas seguidas</p>
       <div class="tablewrap" id="risco"></div>
     </div>
   </section>
@@ -230,10 +243,6 @@ dialog h3{margin:0 0 4px}
   <!-- CRONOGRAMA -->
   <section class="view" id="v-cronograma">
     <div class="toolbar">
-      <button class="btn" id="wPrev">◀</button>
-      <button class="btn" id="wHoje">Hoje</button>
-      <button class="btn" id="wNext">▶</button>
-      <h2 id="wLabel" style="margin:0 6px;font-size:16px;align-self:center"></h2>
       <div class="sp"></div>
       <button class="btn pri" id="wExtra">+ Aula extra / reposição</button>
     </div>
@@ -298,6 +307,7 @@ dialog h3{margin:0 0 4px}
         <div class="row">
           <button class="btn" id="xAlunos">Alunos + frequência</button>
           <button class="btn" id="xChamada">Todas as chamadas</button>
+          <button class="btn" id="xSemanas">Resumo por semana</button>
           <button class="btn" id="xCrono">Cronograma</button>
         </div>
       </div>
@@ -539,7 +549,34 @@ function go(v) {
   render(); window.scrollTo({top: 0});
 }
 $('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.v); });
-function render() { ({painel: renderPainel, cronograma: renderCrono, chamada: renderChamada, turmas: renderTurmas, alunos: renderAlunos, dados: renderDados})[view](); }
+function render() {
+  renderWeekbar();
+  ({painel: renderPainel, cronograma: renderCrono, chamada: renderChamada, turmas: renderTurmas, alunos: renderAlunos, dados: renderDados})[view]();
+}
+
+/* ---------- semana selecionada ----------
+   Cada semana (seg a sáb) começa do zero nas estatísticas; as anteriores continuam salvas e podem ser escolhidas. */
+const segunda = s => addDays(s, -((parse(s).getDay() + 6) % 7));
+const semanaAtual = () => segunda(today());
+const semanaTxt = ws => `${fmtDate(ws)} a ${fmtDate(addDays(ws, 5))}`;
+let semana = semanaAtual(), geral = false;
+const naSemana = (d, ws = semana) => d >= ws && d <= addDays(ws, 6);
+const aulasSel = () => geral ? S.aulas : S.aulas.filter(a => naSemana(a.data));
+const semanasComDados = () => [...new Set(S.aulas.map(a => segunda(a.data)))].sort();
+function irSemana(ws) { geral = false; semana = segunda(ws); render(); }
+function renderWeekbar() {
+  $('#weekbar').classList.toggle('hide', view === 'turmas' || view === 'dados');
+  const ws = [...new Set([...semanasComDados(), semanaAtual(), semana])].sort().reverse();
+  $('#wSel').innerHTML = ws.map(w => `<option value="${w}"${!geral && w === semana ? ' selected' : ''}>Semana ${semanaTxt(w)}${w === semanaAtual() ? ' · atual' : ''}</option>`).join('') +
+    `<option value="geral"${geral ? ' selected' : ''}>Geral · todas as semanas</option>`;
+  const n = aulasSel().length;
+  $('#wInfo').textContent = geral ? `${n} chamada(s) em ${semanasComDados().length} semana(s)`
+    : `${n} chamada(s) nesta semana` + (semana === semanaAtual() ? '' : semana < semanaAtual() ? ' · semana encerrada' : ' · semana futura');
+}
+$('#wSel').onchange = e => { if (e.target.value === 'geral') { geral = true; render(); } else irSemana(e.target.value); };
+$('#wPrev').onclick = () => irSemana(addDays(geral ? semanaAtual() : semana, -7));
+$('#wNext').onclick = () => irSemana(addDays(geral ? semanaAtual() : semana, 7));
+$('#wHoje').onclick = () => irSemana(semanaAtual());
 
 $('#themeBtn').onclick = () => {
   const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -572,8 +609,14 @@ function pendentes() {
   // só conta a partir da primeira chamada registrada (antes disso o controle era na planilha)
   const out = [], inicio = S.aulas.map(a => a.data).sort()[0];
   if (!inicio) return out;
-  for (let i = 14; i >= 0; i--) { const d = addDays(today(), -i); if (d >= inicio) ocorrencias(d).forEach(o => { if (occStatus(o)[2] === 'pend' && o.turma.alunos.length) out.push(o); }); }
+  const de = geral ? inicio : semana, ate = geral ? today() : addDays(semana, 5);
+  for (let d = de; d <= ate && d <= today(); d = addDays(d, 1)) if (d >= inicio) ocorrencias(d).forEach(o => { if (occStatus(o)[2] === 'pend' && o.turma.alunos.length) out.push(o); });
   return out;
+}
+function taxaDe(aulas, ids) {
+  let p = 0, t = 0;
+  aulas.forEach(a => Object.entries(a.reg).forEach(([k, v]) => { if (ids.has(k)) { t++; if (v === 'P') p++; } }));
+  return pct(p, t);
 }
 function renderPainel() {
   const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
@@ -589,20 +632,25 @@ function renderPainel() {
   const keep = ['fTurma', 'fDep'].map(i => $('#' + i).value);
   $('#fTurma').innerHTML = opts(turmaOpts(), keep[0], 'Todas as turmas');
   $('#fDep').innerHTML = opts(deps(), keep[1], 'Todos');
-  const ft = $('#fTurma').value, fd = $('#fDep').value, de = $('#fDe').value, ate = $('#fAte').value;
-  const aulas = S.aulas.filter(a => (!ft || a.turmaId === ft) && (!de || a.data >= de) && (!ate || a.data <= ate));
+  const ft = $('#fTurma').value, fd = $('#fDep').value;
+  const daTurma = a => !ft || a.turmaId === ft;
+  const aulas = aulasSel().filter(daTurma);
   const tSel = turmaById(ft);
   const alunos = S.alunos.filter(a => (!fd || a.departamento === fd) && (!ft || tSel.alunos.includes(a.id) || aulas.some(au => au.reg[a.id])));
+  const ids = new Set(alunos.map(a => a.id));
   const st = alunos.map(a => ({a, s: statsAluno(a.id, aulas)}));
   const tot = st.reduce((o, {s}) => (o.P += s.P, o.F += s.F, o), {P: 0, F: 0});
   const taxa = pct(tot.P, tot.P + tot.F), meta = S.config.meta;
   const risco = st.filter(x => ['crit', 'warn'].includes(status(x.s)[0]));
   const pend = pendentes();
+  const ant = geral ? null : taxaDe(S.aulas.filter(a => daTurma(a) && naSemana(a.data, addDays(semana, -7))), ids);
+  const dif = taxa !== null && ant !== null ? taxa - ant : null;
+  $('#riscoDesc').textContent = (geral ? 'Em todas as semanas: ' : `Na semana de ${semanaTxt(semana)}: `) + 'presença abaixo da meta ou 2+ faltas seguidas';
   $('#kpis').innerHTML = [
     ['Alunos', alunos.length, `${S.turmas.length} turmas`],
-    ['Aulas registradas', aulas.length, aulas.length ? `última em ${fmtDate(aulas.map(a => a.data).sort().at(-1))}` : 'nenhuma chamada ainda'],
-    ['Chamadas pendentes', pend.length, 'últimos 15 dias'],
-    ['Presença geral', taxa === null ? '—' : taxa + '%', `meta: ${meta}%` + (taxa === null ? '' : taxa >= meta ? ' · ✓ acima' : ' · abaixo')],
+    ['Aulas registradas', aulas.length, aulas.length ? `última em ${fmtDate(aulas.map(a => a.data).sort().at(-1))}` : geral ? 'nenhuma chamada ainda' : 'nenhuma nesta semana'],
+    ['Chamadas pendentes', pend.length, geral ? 'desde a primeira chamada' : 'nesta semana, até hoje'],
+    [geral ? 'Presença geral' : 'Presença da semana', taxa === null ? '—' : taxa + '%', `meta: ${meta}%` + (dif === null ? '' : ` · ${dif >= 0 ? '▲ +' : '▼ '}${dif} pts vs semana anterior`)],
     ['Faltas', tot.F, `${tot.P} presenças`],
     ['Precisam de atenção', risco.length, 'abaixo da meta ou faltando seguido'],
   ].map(([l, v, h]) => `<div class="card kpi"><div class="lbl">${l}</div><div class="val">${v}</div><div class="hint">${h}</div></div>`).join('');
@@ -614,13 +662,25 @@ function renderPainel() {
       interaction: {mode: 'index', intersect: false},
       plugins: {tooltip: {callbacks: {footer: items => { const x = byDep[items[0].dataIndex]; return `Presença: ${pct(x.P, x.P + x.F)}%`; }}}}}});
 
-  const datas = [...new Set(aulas.map(a => a.data))].sort(), ids = new Set(alunos.map(a => a.id));
-  const evo = datas.map(d => { let p = 0, t = 0; aulas.filter(a => a.data === d).forEach(a => Object.entries(a.reg).forEach(([k, v]) => { if (ids.has(k)) { t++; if (v === 'P') p++; } })); return pct(p, t); });
-  mkChart('cEvo', {type: 'line', data: {labels: datas.map(fmtDate), datasets: [
-      {label: 'Presença', data: evo, borderColor: css('--s-pres'), backgroundColor: css('--s-pres'), borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, pointBorderColor: css('--surface'), pointBorderWidth: 2, tension: .25, spanGaps: true},
-      {label: 'Meta', data: datas.map(() => meta), borderColor: css('--muted'), borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0, pointHoverRadius: 0}]},
-    options: {interaction: {mode: 'index', intersect: false}, scales: {y: {min: 0, max: 100, ticks: {callback: v => v + '%'}}, x: {grid: {display: false}}},
-      plugins: {tooltip: {callbacks: {label: c => `${c.dataset.label}: ${c.raw}%`}}}}});
+  $('#evoCard').style.display = geral ? 'none' : '';
+  if (!geral) {
+    const dias = [0, 1, 2, 3, 4, 5].map(i => addDays(semana, i));
+    const evo = dias.map(d => taxaDe(aulas.filter(a => a.data === d), ids));
+    mkChart('cEvo', {type: 'line', data: {labels: dias.map(d => `${DIA[parse(d).getDay()]} ${fmtDate(d)}`), datasets: [
+        {label: 'Presença', data: evo, borderColor: css('--s-pres'), backgroundColor: css('--s-pres'), borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, pointBorderColor: css('--surface'), pointBorderWidth: 2, tension: .25, spanGaps: true},
+        {label: 'Meta', data: dias.map(() => meta), borderColor: css('--muted'), borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0, pointHoverRadius: 0}]},
+      options: {interaction: {mode: 'index', intersect: false}, scales: {y: {min: 0, max: 100, ticks: {callback: v => v + '%'}}, x: {grid: {display: false}}},
+        plugins: {tooltip: {callbacks: {label: c => c.raw === null ? 'Sem chamada' : `${c.dataset.label}: ${c.raw}%`}}}}});
+  }
+
+  const sems = semanasComDados(), semTx = sems.map(w => taxaDe(S.aulas.filter(a => daTurma(a) && naSemana(a.data, w)), ids));
+  const cor = css('--s-pres'), apagada = `color-mix(in srgb, ${cor} 35%, ${css('--surface')})`;
+  mkChart('cSem', {type: 'bar', data: {labels: sems.map(w => fmtDate(w)), datasets: [{label: 'Presença', data: semTx,
+      backgroundColor: sems.map(w => geral || w === semana ? cor : apagada), borderRadius: 4, borderSkipped: 'bottom', maxBarThickness: 40}]},
+    options: {scales: {y: {min: 0, max: 100, ticks: {callback: v => v + '%'}}, x: {grid: {display: false}}},
+      onClick: (e, els) => { if (els.length) irSemana(sems[els[0].index]); },
+      onHover: (e, els) => { e.native.target.style.cursor = els.length ? 'pointer' : ''; },
+      plugins: {tooltip: {callbacks: {title: i => `Semana ${semanaTxt(sems[i[0].dataIndex])}`, label: c => c.raw === null ? 'Sem registros' : `Presença: ${c.raw}%`}}}}});
 
   const byT = S.turmas.filter(t => !ft || t.id === ft).map(t => { let p = 0, n = 0; aulas.filter(a => a.turmaId === t.id).forEach(a => Object.entries(a.reg).forEach(([k, v]) => { if (ids.has(k)) { n++; if (v === 'P') p++; } })); return {t: t.nome, v: pct(p, n), n}; }).filter(x => x.v !== null).sort((a, b) => b.v - a.v);
   $('#chTurmaBox').style.height = Math.max(200, byT.length * 30 + 40) + 'px';
@@ -637,14 +697,12 @@ function renderPainel() {
     risco.map(({a, s}) => { const [c, l] = status(s); return `<tr><td>${esc(a.nome)}</td><td>${esc(a.departamento)}</td><td>${esc(turmasDo(a.id).map(t => short(t.nome, 26)).join(', '))}</td><td class="num">${s.P}</td><td class="num">${s.F}</td><td class="num">${s.taxa}%</td><td class="num">${s.seguidas}</td><td><span class="pill ${c}">${l}</span></td></tr>`; }).join('') + '</tbody></table>'
     : `<div class="empty">${S.aulas.length ? 'Ninguém abaixo da meta. 🎉' : 'Registre a primeira chamada para ver os indicadores.'}</div>`;
 }
-['fTurma', 'fDep', 'fDe', 'fAte'].forEach(i => $('#' + i).addEventListener('change', renderPainel));
-$('#fLimpar').onclick = () => { ['fTurma', 'fDep', 'fDe', 'fAte'].forEach(i => $('#' + i).value = ''); renderPainel(); };
+['fTurma', 'fDep'].forEach(i => $('#' + i).addEventListener('change', renderPainel));
+$('#fLimpar').onclick = () => { ['fTurma', 'fDep'].forEach(i => $('#' + i).value = ''); renderPainel(); };
 
 /* ---------- CRONOGRAMA ---------- */
-let semana = (() => { const d = new Date(); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return iso(d); })();
 function renderCrono() {
-  const dias = [0, 1, 2, 3, 4, 5].map(i => addDays(semana, i));
-  $('#wLabel').textContent = `${fmtDate(dias[0])} a ${fmtDate(dias[5])}/${dias[5].slice(0, 4)}`;
+  const dias = [0, 1, 2, 3, 4, 5].map(i => addDays(geral ? semanaAtual() : semana, i));
   $('#weekBox').innerHTML = dias.map(d => {
     const occ = ocorrencias(d);
     return `<div class="day${d === today() ? ' today' : ''}"><h3><b>${DIA_L[parse(d).getDay()]}</b><span>${fmtDate(d)}</span></h3>
@@ -653,9 +711,6 @@ function renderCrono() {
   const sem = S.turmas.filter(t => !t.slots.length);
   $('#semHorario').innerHTML = sem.length ? `<div class="card" style="margin-top:14px"><h2>Turmas sem horário fixo</h2><p class="desc">Não aparecem no cronograma. Defina um horário em Turmas ou lance uma aula extra.</p><div class="chips">${sem.map(t => `<span class="chip">${esc(t.nome)}</span>`).join('')}</div></div>` : '';
 }
-$('#wPrev').onclick = () => { semana = addDays(semana, -7); renderCrono(); };
-$('#wNext').onclick = () => { semana = addDays(semana, 7); renderCrono(); };
-$('#wHoje').onclick = () => { const d = new Date(); d.setDate(d.getDate() - (d.getDay() + 6) % 7); semana = iso(d); renderCrono(); };
 $('#wExtra').onclick = () => {
   if (!S.turmas.length) return toast('Crie uma turma primeiro');
   openDlg(`<h3>Aula extra / reposição</h3><p class="note" style="margin:0 0 12px">Aparece só na data escolhida, sem mudar o horário fixo da turma.</p>
@@ -668,7 +723,7 @@ $('#wExtra').onclick = () => {
 
 /* ---------- CHAMADA ---------- */
 let draft = {}, draftObs = {};
-function abrirChamada(turmaId, data) { go('chamada'); $('#cTurma').value = turmaId; $('#cData').value = data; renderChamada(); }
+function abrirChamada(turmaId, data) { geral = false; semana = segunda(data); go('chamada'); $('#cTurma').value = turmaId; $('#cData').value = data; renderChamada(); }
 function currentAula() { return S.aulas.find(a => a.turmaId === $('#cTurma').value && a.data === $('#cData').value); }
 function loadDraft() { const au = currentAula(); draft = au ? {...au.reg} : {}; draftObs = au ? {...(au.obs || {})} : {}; $('#cTema').value = au?.tema || ''; }
 function renderChamada(reload = true) {
@@ -679,6 +734,8 @@ function renderChamada(reload = true) {
   const cur = $('#cTurma').value;
   $('#cTurma').innerHTML = opts(turmaOpts(), turmaById(cur) ? cur : S.turmas[0].id);
   if (!$('#cData').value) $('#cData').value = today();
+  // trocou de semana na barra: leva a data da chamada para dentro dela
+  if (!geral && !naSemana($('#cData').value)) { $('#cData').value = naSemana(today()) ? today() : semana; reload = true; }
   if (reload) loadDraft();
   const t = turmaById($('#cTurma').value), data = $('#cData').value, au = currentAula();
   const lista = t.alunos.map(alunoById).filter(Boolean);
@@ -712,13 +769,13 @@ $('#chamadaBox').addEventListener('click', e => {
 });
 $('#chamadaBox').addEventListener('input', e => { if (e.target.classList.contains('obs')) draftObs[e.target.dataset.a] = e.target.value; });
 $('#cTurma').addEventListener('change', () => renderChamada());
-$('#cData').addEventListener('change', () => renderChamada());
+$('#cData').addEventListener('change', e => { if (e.target.value) { geral = false; semana = segunda(e.target.value); } render(); });
 
 function renderMatrix(t) {
-  const aulas = S.aulas.filter(a => a.turmaId === t.id).sort((a, b) => a.data.localeCompare(b.data));
+  const aulas = aulasSel().filter(a => a.turmaId === t.id).sort((a, b) => a.data.localeCompare(b.data));
   const lista = t.alunos.map(alunoById).filter(Boolean), ex = new Set(t.alunos);
   aulas.forEach(au => Object.keys(au.reg).forEach(id => { if (!ex.has(id) && alunoById(id)) { lista.push(alunoById(id)); ex.add(id); } }));
-  if (!aulas.length) { $('#matrix').innerHTML = '<div class="empty">Nenhuma chamada registrada nesta turma ainda.</div>'; return; }
+  if (!aulas.length) { $('#matrix').innerHTML = `<div class="empty">Nenhuma chamada desta turma ${geral ? 'registrada ainda' : 'na semana de ' + semanaTxt(semana)}.</div>`; return; }
   $('#matrix').innerHTML = `<table class="matrix"><thead><tr><th>Aluno</th>${aulas.map(au => `<th class="date" data-d="${au.data}" title="${esc(au.tema || '')}">${DIA[parse(au.data).getDay()]} ${fmtDate(au.data)}<small>${pct(Object.values(au.reg).filter(v => v === 'P').length, Object.keys(au.reg).length)}%</small></th>`).join('')}<th class="num">P</th><th class="num">F</th><th class="num">%</th></tr></thead><tbody>` +
     lista.map(a => { const s = statsAluno(a.id, aulas); return `<tr><td>${esc(a.nome)}${t.alunos.includes(a.id) ? '' : ' <span class="note">(saiu)</span>'}</td>${aulas.map(au => { const o = au.obs?.[a.id]; return `<td class="cell${o ? ' has-obs' : ''}" data-au="${au.id}" data-a="${a.id}" data-v="${au.reg[a.id] || ''}" title="${esc(o || '')}">${au.reg[a.id] || '·'}</td>`; }).join('')}<td class="num">${s.P}</td><td class="num">${s.F}</td><td class="num">${s.taxa === null ? '—' : s.taxa + '%'}</td></tr>`; }).join('') + '</tbody></table>';
 }
@@ -808,7 +865,7 @@ function renderAlunos() {
     (!ft || (ft === '__sem' ? !turmasDo(a.id).length : turmaById(ft)?.alunos.includes(a.id))) && (!fd || a.departamento === fd) && (!fn || a.nivel === fn));
   if (!S.alunos.length) { $('#alunosTbl').innerHTML = `<div class="empty"><b>Nenhum aluno cadastrado</b>Adicione um por um ou cole a lista direto do Excel.</div>`; return; }
   $('#alunosTbl').innerHTML = `<table class="sheet"><thead><tr><th></th><th>Nome</th><th>Departamento</th><th>Nível</th><th>Turma(s)</th><th class="num">P</th><th class="num">F</th><th class="num">Presença</th><th>Status</th><th>Observações</th><th></th></tr></thead><tbody>` +
-    list.map((a, i) => { const s = statsAluno(a.id), [c, l] = status(s), ts = turmasDo(a.id); return `<tr data-id="${a.id}">
+    list.map((a, i) => { const s = statsAluno(a.id, aulasSel()), [c, l] = status(s), ts = turmasDo(a.id); return `<tr data-id="${a.id}">
       <td class="rown">${i + 1}</td>
       <td><input data-f="nome" value="${esc(a.nome)}" style="min-width:170px"></td>
       <td><select data-f="departamento">${opts(deps(), a.departamento, '—')}</select></td>
@@ -900,11 +957,13 @@ const csv = rows => '﻿' + rows.map(r => r.map(c => { c = String(c ?? ''); retu
 const brDate = s => s.split('-').reverse().join('/');
 $('#xAlunos').onclick = () => download(`alunos-espanol-${today()}.csv`, csv([['Nome', 'Departamento', 'Nível', 'Turmas', 'Presenças', 'Faltas', 'Presença %', 'Status', 'Observações'],
   ...S.alunos.map(a => { const s = statsAluno(a.id); return [a.nome, a.departamento, a.nivel, turmasDo(a.id).map(t => t.nome).join(' + '), s.P, s.F, s.taxa ?? '', status(s)[1].replace(/^\W+\s*/, ''), a.obs]; })]), 'text/csv');
-$('#xChamada').onclick = () => download(`chamadas-espanol-${today()}.csv`, csv([['Data', 'Dia', 'Turma', 'Conteúdo', 'Aluno', 'Departamento', 'Marcação', 'Observação'],
-  ...S.aulas.slice().sort((a, b) => a.data.localeCompare(b.data)).flatMap(au => Object.entries(au.reg).map(([id, v]) => { const a = alunoById(id) || {}; return [brDate(au.data), DIA_L[parse(au.data).getDay()], turmaById(au.turmaId)?.nome, au.tema, a.nome, a.departamento, LABEL[v], au.obs?.[id]]; }))]), 'text/csv');
+$('#xChamada').onclick = () => download(`chamadas-espanol-${today()}.csv`, csv([['Semana', 'Data', 'Dia', 'Turma', 'Conteúdo', 'Aluno', 'Departamento', 'Marcação', 'Observação'],
+  ...S.aulas.slice().sort((a, b) => a.data.localeCompare(b.data)).flatMap(au => Object.entries(au.reg).map(([id, v]) => { const a = alunoById(id) || {}; return [semanaTxt(segunda(au.data)), brDate(au.data), DIA_L[parse(au.data).getDay()], turmaById(au.turmaId)?.nome, au.tema, a.nome, a.departamento, LABEL[v], au.obs?.[id]]; }))]), 'text/csv');
 $('#xCrono').onclick = () => download(`cronograma-espanol-${today()}.csv`, csv([['Dia', 'Início', 'Fim', 'Turma', 'Nível', 'Alunos', 'Link'],
   ...S.turmas.flatMap(t => t.slots.map(s => [s.dia, DIA_L[s.dia], s.ini, s.fim, t.nome, t.nivel, t.alunos.map(id => alunoById(id)?.nome).join(', '), t.link]))
     .sort((a, b) => a[0] - b[0] || a[2].localeCompare(b[2])).map(r => r.slice(1))]), 'text/csv');
+$('#xSemanas').onclick = () => download(`resumo-semanal-espanol-${today()}.csv`, csv([['Semana', 'Aluno', 'Departamento', 'Nível', 'Presenças', 'Faltas', 'Presença %'],
+  ...semanasComDados().flatMap(w => { const au = S.aulas.filter(a => naSemana(a.data, w)); return S.alunos.map(a => [a, statsAluno(a.id, au)]).filter(([, s]) => s.total).map(([a, s]) => [semanaTxt(w) + '/' + w.slice(0, 4), a.nome, a.departamento, a.nivel, s.P, s.F, s.taxa]); })]), 'text/csv');
 function baixarBackup() { S.lastBackup = Date.now(); save(); download(`backup-espanol-unicpo-${today()}.json`, JSON.stringify(S, null, 1), 'application/json'); render(); }
 async function restaurar(input) {
   const f = input.files[0]; if (!f) return;
