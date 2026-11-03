@@ -7,7 +7,7 @@
  */
 
 // Troque pela senha que o professor vai digitar no site.
-const SENHA = 'TROQUE_ESTA_SENHA';
+const SENHA = 'espanol123';
 
 const DIA_L = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 

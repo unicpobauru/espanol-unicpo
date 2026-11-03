@@ -121,7 +121,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .occ .t{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
 .occ .n{font-size:12.5px;line-height:1.3;margin:2px 0 4px}
 .occ.done{border-left-color:var(--good)}
-.occ.pend{border-left-color:var(--warn)}
+.occ.pend,.occ.parcial{border-left-color:var(--warn)}
 .occ.cancel{opacity:.55;border-left-color:var(--muted)}
 .occ.cancel .n{text-decoration:line-through}
 .today-list .occ{display:flex;gap:12px;align-items:center}
@@ -482,7 +482,7 @@ function ocorrencias(data) {
 }
 function occStatus(o) {
   if (o.cancelada) return ['na', 'Cancelada', 'cancel'];
-  if (o.aula) { const n = Object.keys(o.aula.reg).length, p = Object.values(o.aula.reg).filter(v => v === 'P').length; return ['ok', `✓ ${p}/${n} presentes`, 'done']; }
+  if (o.aula) { const n = Object.keys(o.aula.reg).length, p = Object.values(o.aula.reg).filter(v => v === 'P').length; return p === n ? ['ok', `✓ ${p}/${n} presentes`, 'done'] : ['warn', `${p}/${n} presentes`, 'parcial']; }  // faltou alguém: laranja
   if (o.data < today() || (o.data === today() && o.fim <= new Date().toTimeString().slice(0, 5))) return ['warn', 'Chamada pendente', 'pend'];
   return ['info', o.tipo === 'extra' ? 'Aula extra' : 'Prevista', ''];
 }
